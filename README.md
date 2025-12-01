@@ -1,7 +1,3 @@
 # ai-student-assistant
-JUST TESTING
-testing 2
 
-aftter new login
-
-done (issue solved)
+Now this AI assistant can generate responses and can also solve simple maths equations.
