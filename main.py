@@ -40,6 +40,9 @@ def query_mistral(prompt):
 
     return data
 
+
+
+
 # 4. TOOL FUNCTIONS
 def handle_math(equation):
     try:
@@ -50,6 +53,10 @@ def handle_math(equation):
     except Exception as e:
         return f"❌ Math Error: {e}"
 
+
+# Global To-Do List
+todo_list = []
+
 def handle_todo(action, task_text):
     if action == "add":
         todo_list.append(task_text)
@@ -57,6 +64,55 @@ def handle_todo(action, task_text):
     elif action == "list":
         if not todo_list: return "📂 Your list is empty."
         return "\n".join([f"{i+1}. {t}" for i, t in enumerate(todo_list)])
+    
+def handle_todo_remove(arg):
+    if not todo_list:
+        return "📂 Your list is empty."
+
+    # If the user passed a number -> remove by index
+    if arg.isdigit():
+        idx = int(arg) - 1
+        if 0 <= idx < len(todo_list):
+            removed = todo_list.pop(idx)
+            return f"🗑️ Removed: '{removed}'"
+        return "⚠️ Invalid index."
+
+    # Otherwise -> remove by matching text
+    for t in todo_list:
+        if t.lower() == arg.lower():
+            todo_list.remove(t)
+            return f"🗑️ Removed: '{t}'"
+    
+    return "⚠️ Task not found."
+
+
+
+
+def handle_todo_edit(arg):
+    if "|" not in arg:
+        return "⚠️ Usage: /edit old text | new text"
+
+    old, new = [x.strip() for x in arg.split("|", 1)]
+
+    # If the user entered an index instead of old text
+    if old.isdigit():
+        idx = int(old) - 1
+        if 0 <= idx < len(todo_list):
+            old_text = todo_list[idx]
+            todo_list[idx] = new
+            return f"✏️ Updated: '{old_text}' → '{new}'"
+        return "⚠️ Invalid index."
+
+    # Edit by matching text
+    for i, t in enumerate(todo_list):
+        if t.lower() == old.lower():
+            todo_list[i] = new
+            return f"✏️ Updated: '{t}' → '{new}'"
+
+    return "⚠️ Task not found."
+
+
+
 
 # 5. THE CLI PARSER LOOP
 def start_app():
@@ -85,7 +141,19 @@ def start_app():
                         print(handle_todo("add", arg))
                     else: 
                         print(handle_todo("list", ""))
-                
+
+                elif cmd == "/remove":
+                    if arg:
+                       print(handle_todo_remove(arg))
+                    else:
+                        print("⚠️ Usage: /remove 2   or   /remove task name")
+
+                elif cmd == "/edit":
+                    if arg:
+                        print(handle_todo_edit(arg))
+                    else:
+                        print("⚠️ Usage: /edit old | new")
+
                 elif cmd == "/math":
                     if arg:
                         print(handle_math(arg))
@@ -94,6 +162,8 @@ def start_app():
                 
                 else:
                     print(f"❓ Unknown command: {cmd}")
+
+
 
             # --- CHAT LOGIC ---
             else:
