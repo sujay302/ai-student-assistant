@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StudyPal - AI Assistant</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        /* =========================================
+           1. CSS VARIABLES & RESET
+           ========================================= */
+        :root {
+            --primary: #4F46E5;
+            --primary-hover: #4338ca;
+            --secondary: #9333EA;
+            --bg: #F8FAFC;
+            --white: #ffffff;
+            --text-dark: #1E293B;
+            --text-light: #64748B;
+            --border: #E2E8F0;
+            --gradient: linear-gradient(135deg, var(--primary), var(--secondary));
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
+        body { background-color: var(--bg); color: var(--text-dark); overflow-x: hidden; }
+        a { text-decoration: none; color: inherit; cursor: pointer; }
+        ul { list-style: none; }
+
+        /* =========================================
+           2. LOADER
+           ========================================= */
+        #loader {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100vh;
+            background: var(--white); display: flex; flex-direction: column;
+            justify-content: center; align-items: center; z-index: 9999;
+            transition: opacity 0.5s ease;
+        }
+        .loader-icon { font-size: 4rem; background: var(--gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 20px; animation: bounce 2s infinite; }
+        .spinner { width: 40px; height: 40px; border: 4px solid rgba(79, 70, 229, 0.1); border-left-color: var(--primary); border-radius: 50%; animation: spin 1s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        @keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+        .loader-hidden { opacity: 0; visibility: hidden; }
+
+        /* =========================================
+           3. NAVBAR & DROPDOWN
+           ========================================= */
+        header { position: fixed; top: 0; width: 100%; z-index: 100; background: rgba(255,255,255,0.95); backdrop-filter: blur(10px); border-bottom: 1px solid rgba(255,255,255,0.3); }
+        nav { max-width: 1200px; margin: 0 auto; padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; }
+        .logo { font-size: 1.5rem; font-weight: 700; display: flex; align-items: center; gap: 10px; font-family: 'Poppins', sans-serif; }
+        .logo i { color: var(--primary); }
+        
+        .nav-links { display: flex; gap: 2rem; align-items: center; }
+        .nav-links a { font-weight: 500; transition: color 0.3s; }
+        .nav-links a:hover { color: var(--primary); }
+
+        /* Dropdown Logic */
+        .dropdown-item { position: relative; }
+        .submenu {
+            position: absolute; top: 100%; left: 0; width: 200px;
+            background: #fff; box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            border-radius: 8px; padding: 10px; margin-top: 10px;
+            opacity: 0; visibility: hidden; transform: translateY(10px);
+            transition: all 0.3s ease;
+        }
+        .dropdown-item:hover .submenu { opacity: 1; visibility: visible; transform: translateY(0); }
+        .submenu li a { display: block; padding: 10px; border-radius: 6px; font-size: 0.9rem; }
+        .submenu li a:hover { background: #EEF2FF; color: var(--primary); }
+
+        .btn-login { padding: 0.5rem 1.5rem; border: 2px solid var(--primary); border-radius: 50px; color: var(--primary) !important; font-weight: 600; }
+        .btn-login:hover { background: var(--primary); color: #fff !important; }
+        .hamburger { display: none; font-size: 1.5rem; cursor: pointer; }
+
+        /* =========================================
+           4. HERO SECTION
+           ========================================= */
+        .hero { padding: 160px 2rem 100px; max-width: 1200px; margin: 0 auto; display: flex; align-items: center; min-height: 100vh; }
+        .hero-text { flex: 1; padding-right: 40px; }
+        .badge { background: #EEF2FF; color: var(--primary); padding: 8px 16px; border-radius: 30px; font-weight: 600; font-size: 0.9rem; display: inline-block; margin-bottom: 20px; }
+        .hero h1 { font-family: 'Poppins', sans-serif; font-size: 3.5rem; line-height: 1.2; margin-bottom: 20px; font-weight: 800; }
+        .gradient-text { background: var(--gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .btn { padding: 12px 30px; border-radius: 50px; font-weight: 600; cursor: pointer; border: none; transition: transform 0.3s; }
+        .btn-primary { background: var(--gradient); color: #fff; box-shadow: 0 4px 15px rgba(79, 70, 229, 0.4); }
+        .btn-secondary { background: #fff; border: 1px solid #E2E8F0; margin-left: 10px; }
+        .hero-image { flex: 1; text-align: center; }
+        .hero-image img { width: 100%; max-width: 450px; animation: float 6s infinite ease-in-out; }
+        @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-20px); } }
+
+        /* =========================================
+           5. FEATURES GRID
+           ========================================= */
+        .section-container { max-width: 1200px; margin: 0 auto; padding: 80px 20px; }
+        .section-header { text-align: center; margin-bottom: 50px; }
+        .section-header h2 { font-size: 2.5rem; font-weight: 700; margin-bottom: 10px; font-family: 'Poppins', sans-serif; }
+        
+        .services-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 30px; }
+        .service-card { background: #fff; border: 1px solid var(--border); border-radius: 16px; padding: 30px; transition: all 0.3s; cursor: pointer; }
+        .service-card:hover { transform: translateY(-8px); box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1); border-color: var(--primary); }
+        .icon-box { width: 50px; height: 50px; background: #EEF2FF; color: var(--primary); display: flex; align-items: center; justify-content: center; border-radius: 12px; font-size: 1.5rem; margin-bottom: 20px; }
+        .service-card h3 { font-size: 1.25rem; font-weight: 600; margin-bottom: 10px; }
+        .service-card p { color: var(--text-light); font-size: 0.95rem; line-height: 1.5; margin-bottom: 20px; }
+        .card-btn { width: 100%; padding: 10px; border: 1px solid var(--border); background: transparent; border-radius: 8px; font-weight: 600; cursor: pointer; transition: 0.3s; }
+        .service-card:hover .card-btn { background: var(--primary); color: #fff; border-color: var(--primary); }
+
+        /* =========================================
+           6. AUTH MODAL (Login/Signup)
+           ========================================= */
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(5px); z-index: 1000; display: flex; align-items: center; justify-content: center; opacity: 0; visibility: hidden; transition: 0.3s; }
+        .modal-overlay.active { opacity: 1; visibility: visible; }
+        .modal-box { background: #fff; width: 90%; max-width: 400px; padding: 40px; border-radius: 20px; text-align: center; position: relative; transform: scale(0.95); transition: 0.3s; }
+        .modal-overlay.active .modal-box { transform: scale(1); }
+        .close-btn { position: absolute; top: 15px; right: 20px; border: none; background: none; font-size: 1.2rem; cursor: pointer; color: var(--text-light); }
+
+        .input-group { text-align: left; margin-bottom: 15px; position: relative; }
+        .input-group label { display: block; font-size: 0.9rem; font-weight: 500; margin-bottom: 5px; }
+        .input-group input { width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: 8px; outline: none; }
+        .input-group input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px #EEF2FF; }
+        
+        .toggle-password { position: absolute; right: 15px; top: 38px; cursor: pointer; color: var(--text-light); }
+        
+        .btn-full { width: 100%; padding: 12px; background: var(--primary); color: #fff; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; margin-top: 10px; }
+        .btn-full:hover { background: var(--primary-hover); }
+
+        .social-buttons { display: flex; justify-content: center; gap: 15px; margin: 20px 0; }
+        .social-btn { width: 40px; height: 40px; border-radius: 50%; border: 1px solid var(--border); background: #fff; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.3s; color: var(--text-dark); }
+        .social-btn:hover { transform: translateY(-3px); box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+        
+        .social-divider { margin: 20px 0; position: relative; }
+        .social-divider::before { content: ''; position: absolute; top: 50%; left: 0; width: 100%; height: 1px; background: var(--border); }
+        .social-divider span { background: #fff; position: relative; padding: 0 10px; color: var(--text-light); font-size: 0.85rem; }
+
+        .switch-link { margin-top: 15px; font-size: 0.9rem; color: var(--text-light); }
+        .switch-link a { color: var(--primary); font-weight: 600; cursor: pointer; }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .nav-links { position: fixed; top: 70px; right: -100%; width: 100%; height: 100vh; background: #fff; flex-direction: column; padding: 2rem; transition: 0.3s; box-shadow: 0 10px 10px rgba(0,0,0,0.1); }
+            .nav-links.active { right: 0; }
+            .hamburger { display: block; }
+            .hero { flex-direction: column-reverse; text-align: center; padding-top: 120px; }
+            .hero-text { padding-right: 0; margin-top: 40px; }
+            .submenu { position: static; opacity: 1; visibility: visible; box-shadow: none; width: 100%; display: none; background: #f8fafc; }
+            .dropdown-item:hover .submenu { display: block; } 
+        }
+    </style>
+</head>
+<body>
+
+    <div id="loader">
+        <div class="loader-icon"><i class="fa-solid fa-robot"></i></div>
+        <h3>AI Assistant for Students</h3>
+        <div class="spinner"></div>
+    </div>
+
+    <header id="navbar">
+        <nav>
+            <div class="logo"><i class="fa-solid fa-brain"></i> StudyPal</div>
+            <ul class="nav-links" id="navLinks">
+                <li><a href="#home">Home</a></li>
+                <li class="dropdown-item">
+                    <a href="#">Features <i class="fa-solid fa-chevron-down"></i></a>
+                    <ul class="submenu">
+                        <li><a href="#" class="feature-link" data-name="AI Chatbot">AI Chatbot</a></li>
+                        <li><a href="#" class="feature-link" data-name="Task Planner">Task Planner</a></li>
+                        <li><a href="#" class="feature-link" data-name="PDF Editor">PDF Editor</a></li>
+                    </ul>
+                </li>
+                <li><a href="#services">Services</a></li>
+                <li><a href="#about">About</a></li>
+                <li><a href="#" class="btn-login" id="navLoginBtn">Login</a></li>
+            </ul>
+            <div class="hamburger" id="hamburger"><i class="fa-solid fa-bars"></i></div>
+        </nav>
+    </header>
+
+    <section class="hero" id="home">
+        <div class="hero-text">
+            <div class="badge">🚀 v2.0 Now Live</div>
+            <h1>Your Smart <span class="gradient-text">AI Assistant</span> <br>for Student Life</h1>
+            <p>Stop struggling with assignments. Get instant answers, manage tasks, and organize notes with StudyPal.</p>
+            <div class="cta-buttons">
+                <button class="btn btn-primary" onclick="openModal('signup')">Get Started</button>
+                <button class="btn btn-secondary">Explore Features</button>
+            </div>
+        </div>
+        <div class="hero-image">
+            <img src="https://cdni.iconscout.com/illustration/premium/thumb/artificial-intelligence-illustration-download-in-svg-png-gif-file-formats--brain-technology-robot-virtual-human-automation-pack-science-technology-illustrations-3694065.png" alt="AI">
+        </div>
+    </section>
+
+    <section class="section-container" id="services">
+        <div class="section-header">
+            <span class="badge">Why Choose Us</span>
+            <h2>Supercharge Your Studies</h2>
+        </div>
+        <div class="services-grid">
+            
+            <div class="service-card" data-name="AI Chatbot">
+                <div class="icon-box"><i class="fa-solid fa-robot"></i></div>
+                <h3>AI Chatbot</h3>
+                <p>Ask doubts and get instant answers.</p>
+                <button class="card-btn">Try Now</button>
+            </div>
+
+            <div class="service-card" data-name="Task Planner">
+                <div class="icon-box"><i class="fa-solid fa-list-check"></i></div>
+                <h3>Task Planner</h3>
+                <p>Organize your daily study schedule.</p>
+                <button class="card-btn">Try Now</button>
+            </div>
+
+            <div class="service-card" data-name="PDF Editor">
+                <div class="icon-box"><i class="fa-solid fa-file-pdf"></i></div>
+                <h3>PDF Editor</h3>
+                <p>Edit and summarize study materials.</p>
+                <button class="card-btn">Try Now</button>
+            </div>
+
+            <div class="service-card" data-name="Mock Interview">
+                <div class="icon-box"><i class="fa-solid fa-user-tie"></i></div>
+                <h3>Mock Interview</h3>
+                <p>Prepare for jobs with AI interviews.</p>
+                <button class="card-btn">Try Now</button>
+            </div>
+
+        </div>
+    </section>
+
+    <div class="modal-overlay" id="authModal">
+        <div class="modal-box">
+            <button class="close-btn" onclick="closeModal()"><i class="fa-solid fa-xmark"></i></button>
+            
+            <div id="loginContainer">
+                <h2>Welcome Back</h2>
+                <form id="loginForm">
+                    <div class="input-group">
+                        <label>Email</label>
+                        <input type="email" required>
+                    </div>
+                    <div class="input-group">
+                        <label>Password</label>
+                        <input type="password" id="loginPass" required>
+                        <i class="fa-regular fa-eye toggle-password" onclick="togglePassword('loginPass', this)"></i>
+                    </div>
+                    <button class="btn-full">Login</button>
+                </form>
+                
+                <div class="social-divider"><span>Or continue with</span></div>
+                <div class="social-buttons">
+                    <button class="social-btn"><i class="fa-brands fa-google"></i></button>
+                    <button class="social-btn"><i class="fa-brands fa-facebook-f"></i></button>
+                    <button class="social-btn"><i class="fa-brands fa-github"></i></button>
+                </div>
+
+                <div class="switch-link">
+                    New here? <a onclick="switchMode('signup')">Create Account</a>
+                </div>
+            </div>
+
+            <div id="signupContainer" style="display: none;">
+                <h2>Create Account</h2>
+                <form id="signupForm">
+                    <div class="input-group">
+                        <label>Full Name</label>
+                        <input type="text" required>
+                    </div>
+                    <div class="input-group">
+                        <label>Email</label>
+                        <input type="email" required>
+                    </div>
+                    <div class="input-group">
+                        <label>Password</label>
+                        <input type="password" id="signupPass" required>
+                        <i class="fa-regular fa-eye toggle-password" onclick="togglePassword('signupPass', this)"></i>
+                    </div>
+                    <button class="btn-full">Sign Up</button>
+                </form>
+
+                <div class="switch-link">
+                    Already have an account? <a onclick="switchMode('login')">Login</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- 1. STATE MANAGEMENT ---
+        let isLoggedIn = false; 
+
+        // --- 2. LOADER ---
+        window.onload = () => {
+            setTimeout(() => {
+                document.getElementById('loader').classList.add('loader-hidden');
+            }, 1000); // 1 Second loader
+        };
+
+        // --- 3. MOBILE MENU ---
+        const hamburger = document.getElementById('hamburger');
+        const navLinks = document.getElementById('navLinks');
+        hamburger.addEventListener('click', () => {
+            navLinks.classList.toggle('active');
+        });
+
+        // --- 4. FEATURE LOCK LOGIC (MAIN) ---
+        function checkAccess(featureName) {
+            if(isLoggedIn) {
+                alert(`Opening ${featureName}...`);
+                // window.location.href = "tool.html";
+            } else {
+                openModal('login'); // Trigger Modal if not logged in
+            }
+        }
+
+        // Attach listener to Service Cards "Try Now" buttons
+        document.querySelectorAll('.card-btn, .feature-link').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.preventDefault();
+                // Get Feature Name
+                let name;
+                if(btn.closest('.service-card')) {
+                    name = btn.closest('.service-card').getAttribute('data-name');
+                } else {
+                    name = btn.getAttribute('data-name');
+                }
+                checkAccess(name);
+            });
+        });
+
+        // --- 5. MODAL LOGIC ---
+        const modal = document.getElementById('authModal');
+        const loginBox = document.getElementById('loginContainer');
+        const signupBox = document.getElementById('signupContainer');
+        const navBtn = document.getElementById('navLoginBtn');
+
+        function openModal(mode) {
+            modal.classList.add('active');
+            switchMode(mode);
+            // Close mobile menu if open
+            navLinks.classList.remove('active');
+        }
+
+        function closeModal() {
+            modal.classList.remove('active');
+        }
+
+        function switchMode(mode) {
+            if(mode === 'signup') {
+                loginBox.style.display = 'none';
+                signupBox.style.display = 'block';
+            } else {
+                signupBox.style.display = 'none';
+                loginBox.style.display = 'block';
+            }
+        }
+
+        // --- 6. PASSWORD TOGGLE ---
+        function togglePassword(id, icon) {
+            const input = document.getElementById(id);
+            if(input.type === "password") {
+                input.type = "text";
+                icon.classList.remove('fa-eye');
+                icon.classList.add('fa-eye-slash');
+            } else {
+                input.type = "password";
+                icon.classList.remove('fa-eye-slash');
+                icon.classList.add('fa-eye');
+            }
+        }
+
+        // --- 7. AUTH SIMULATION ---
+        
+        // Navbar Login/Logout
+        navBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            if(isLoggedIn) {
+                if(confirm("Do you want to logout?")) {
+                    isLoggedIn = false;
+                    navBtn.innerText = "Login";
+                }
+            } else {
+                openModal('login');
+            }
+        });
+
+        // Login Logic
+        document.getElementById('loginForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const btn = e.target.querySelector('button');
+            const originalText = btn.innerText;
+            btn.innerText = "Verifying...";
+            btn.style.opacity = "0.7";
+
+            setTimeout(() => {
+                isLoggedIn = true; // Set State
+                navBtn.innerText = "Profile"; // Update UI
+                btn.innerText = "Success!";
+                btn.style.backgroundColor = "#10b981";
+                
+                setTimeout(() => {
+                    closeModal();
+                    alert("Login Successful! You can now access features.");
+                    btn.innerText = originalText;
+                    btn.style.backgroundColor = ""; 
+                    btn.style.opacity = "1";
+                }, 800);
+            }, 1000);
+        });
+
+        // Signup Logic
+        document.getElementById('signupForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const btn = e.target.querySelector('button');
+            const originalText = btn.innerText;
+            btn.innerText = "Creating Account...";
+            
+            setTimeout(() => {
+                isLoggedIn = true;
+                navBtn.innerText = "Profile";
+                closeModal();
+                alert("Account Created! You are logged in.");
+                btn.innerText = originalText;
+            }, 1000);
+        });
+
+    </script>
+</body>
+</html>

@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Workspace Pro</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="chat.css">
+</head>
+<body>
+
+    <div class="app-container">
+        <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+        <aside class="sidebar" id="sidebar">
+          <button id="closeSidebarBtn" class="mobile-close-btn hidden">
+    <i class="fa-solid fa-xmark"></i>
+</button>
+            
+            <div class="sidebar-action-grid">
+                <button id="newChatBtn" class="action-btn-main" title="New AI Chat">
+                    <i class="fa-solid fa-plus"></i> New Chat
+                </button>
+                <div class="secondary-actions">
+                    <button id="newGroupBtn" class="action-btn-icon" title="New Group">
+                        <i class="fa-solid fa-users"></i>
+                    </button>
+                    <button id="newProjectBtn" class="action-btn-icon" title="New Project Folder">
+                        <i class="fa-solid fa-folder-plus"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div class="sidebar-section">
+                <div class="section-label">Projects</div>
+                <div id="projectsList" class="projects-list">
+                    </div>
+            </div>
+
+            <div class="sidebar-divider"></div>
+
+            <div class="search-container">
+                <i class="fa-solid fa-search"></i>
+                <input type="text" id="chatSearch" placeholder="Search chats...">
+            </div>
+
+            <div class="section-header-row">
+                <div class="section-label" id="historyLabel">All Chats</div>
+                <button class="icon-tiny hidden" id="backToAllChats" title="Back to All"><i class="fa-solid fa-arrow-left"></i></button>
+            </div>
+            
+            <div class="chat-history-list" id="chatHistoryList"></div>
+
+            <div class="sidebar-footer">
+                <div class="user-profile" id="userProfileBtn">
+                    <div class="avatar">U</div>
+                    <div class="user-info">
+                        <span class="name">User Account</span>
+                        <span class="plan">Pro Workspace</span>
+                    </div>
+                    <i class="fa-solid fa-ellipsis-vertical menu-icon"></i>
+                </div>
+
+                <div class="user-menu hidden" id="userMenu">
+                    <div class="menu-item" id="toggleThemeBtn">
+                        <i class="fa-solid fa-moon"></i> Dark Mode
+                    </div>
+                    <div class="menu-item" id="clearAllBtn">
+                        <i class="fa-solid fa-trash-can"></i> Clear All Data
+                    </div>
+                    <div class="menu-item" id="settingsBtn">
+                        <i class="fa-solid fa-gear"></i> Settings
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <main class="main-content">
+            <header class="chat-header">
+                <div style="display:flex; align-items:center; gap:10px;">
+                    <button class="mobile-menu-btn" id="mobileMenuBtn"><i class="fa-solid fa-bars"></i></button>
+                    <div>
+                        <span id="currentChatTitle" style="font-weight:600;">Welcome</span>
+                        <div id="currentChatSubtitle" class="subtitle">Select a chat</div>
+                    </div>
+                </div>
+                
+                <div class="header-actions">
+                    <button class="icon-btn" id="moveChatBtn" title="Move to Project"><i class="fa-regular fa-folder"></i></button>
+                </div>
+            </header>
+
+            <div class="chat-container" id="chatContainer">
+                <div id="welcomeScreen" class="welcome-screen">
+                    <div class="logo-large"><i class="fa-solid fa-robot"></i></div>
+                    <h2>How can I help you today?</h2>
+                    <p>Create a Project, start a Group Chat, or talk to AI.</p>
+                </div>
+
+                <div id="messagesList" class="messages-list"></div>
+
+                <div id="typingIndicator" class="message ai typing hidden">
+                    <div class="avatar"><i class="fa-solid fa-robot"></i></div>
+                    <div class="bubble">
+                        <div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="input-area">
+                <div class="input-wrapper">
+                    <input type="text" id="messageInput" placeholder="Type a message..." autocomplete="off">
+                    
+                    <button id="voiceBtn" class="icon-btn micro-btn" title="Voice Input">
+                        <i class="fa-solid fa-microphone"></i>
+                    </button>
+                    
+                    <button id="sendBtn" class="icon-btn send-btn" disabled>
+                        <i class="fa-solid fa-paper-plane"></i>
+                    </button>
+                </div>
+                <div class="disclaimer">AI can make mistakes. Consider checking important information.</div>
+            </div>
+        </main>
+    </div>
+
+    <div class="modal-overlay hidden" id="projectModal">
+        <div class="modal">
+            <h3>New Project</h3>
+            <input type="text" id="projectNameInput" placeholder="Project Name" class="modal-input">
+            <div class="modal-buttons">
+                <button class="cancel-btn">Cancel</button>
+                <button class="confirm-btn" id="confirmProjectBtn">Create</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay hidden" id="groupModal">
+        <div class="modal">
+            <h3>New Group Chat</h3>
+            <input type="text" id="groupNameInput" placeholder="Group Name" class="modal-input">
+            <div class="modal-buttons">
+                <button class="cancel-btn">Cancel</button>
+                <button class="confirm-btn" id="confirmGroupBtn">Create</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay hidden" id="moveModal">
+        <div class="modal">
+            <h3>Move to Project</h3>
+            <div id="projectSelectContainer" class="selection-list"></div>
+            <button class="cancel-btn" style="width:100%; margin-top:10px;">Close</button>
+        </div>
+    </div>
+
+    <div class="modal-overlay hidden" id="settingsModal">
+        <div class="modal">
+            <div class="modal-header-row">
+                <h3>Settings</h3>
+                <button class="icon-tiny cancel-btn-icon"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="setting-row">
+                <span>Theme Preference</span>
+                <select id="themeSelect">
+                    <option value="light">Light</option>
+                    <option value="dark">Dark</option>
+                </select>
+            </div>
+            <div class="setting-row">
+                <span>Export Data</span>
+                <button class="secondary-btn" onclick="alert('Data exported!')">Download JSON</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="chat.js"></script>
+</body>
+</html>
