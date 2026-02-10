@@ -2,9 +2,7 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // --- 1. STATE ---
     const STORAGE_KEY = 'ai_workspace_final';
-    const AI_DELAY_MS = 1000;
-    
-    let state = {
+        let state = {
         chats: [],
         projects: [],
         currentChatId: null,
@@ -249,7 +247,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if(chatContainer) chatContainer.scrollTop = chatContainer.scrollHeight;
 }
 
-    // --- 8. MESSAGING (FIXED FOR FLASK) ---
+    // --- 8. MESSAGING ---
     async function sendMessage() {
         const text = els.input.value.trim();
         if (!text || !state.currentChatId) return;
@@ -281,11 +279,10 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // --- 9. BACKEND CONNECTION (FIXED) ---
+    // --- 9. BACKEND CONNECTION ---
     async function generateAIResponse(userMessage) {
         try {
-            // Using relative path for Flask
-            const response = await fetch('/ask', {
+            const response = await fetch('http://localhost:3000/api/chat', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ message: userMessage })
@@ -297,7 +294,7 @@ document.addEventListener('DOMContentLoaded', () => {
             return data.reply || "No response received.";
         } catch (error) {
             console.error("Backend Error:", error);
-            return "⚠️ Connection Error: Please make sure 'python main.py' is running.";
+            return "⚠️ Connection Error: Please make sure backend server is running on http://localhost:3000.";
         }
     }
 
