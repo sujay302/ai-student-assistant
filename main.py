@@ -1,94 +1,181 @@
 import os
 import requests
+import time
 import math
-from flask import Flask, request, jsonify, render_template
-from flask_cors import CORS 
 from dotenv import load_dotenv
 
-# --- 1. SETUP & CONFIGURATION ---
+# 1. SETUP
 load_dotenv()
-
-# Variable ko PEHLE define karein
 HF_TOKEN = os.getenv("HF_TOKEN")
 
-# Phir check ya print karein
-if HF_TOKEN:
-    print(f"Token Loaded: {HF_TOKEN[:5]}***")
-    print("✅ Success! .env file se token mil gaya hai.")
-else:
-    print("❌ Error: .env file nahi mil rahi ya token galat hai.")
 
-app = Flask(__name__,
-            template_folder='frontend/chatting', 
-            static_folder='frontend/chatting',
-            static_url_path='')
-
-CORS(app)
-
+# We use v0.2 because it is very stable on the free tier
 API_URL = "https://router.huggingface.co/v1/chat/completions"
 HEADERS = {
-    "Authorization": f"Bearer {HF_TOKEN}", 
+    "Authorization": f"Bearer {HF_TOKEN}",
     "Content-Type": "application/json"
 }
 
-# --- 2. MISTRAL QUERY FUNCTION ---
+
 def query_mistral(prompt):
     payload = {
-        "model": "mistralai/Mistral-7B-Instruct-v0.2",
-        "messages": [{"role": "user", "content": prompt}],
-        "parameters": {"max_new_tokens": 500}
+        "model": "mistralai/Mistral-7B-Instruct-v0.2:featherless-ai",
+        "messages": [
+            {"role": "user", "content": prompt}
+        ]
     }
+
+    response = requests.post(API_URL, headers=HEADERS, json=payload)
+
+    """
+    print("Status:", response.status_code)
+    print("Response:", response.text)
+    """
+
     try:
-        response = requests.post(API_URL, headers=HEADERS, json=payload)
         data = response.json()
-        
-        # Unauthorized error handle karein
-        if response.status_code == 401:
-            return "⚠️ API Error: Invalid Token. Hugging Face par naya token banayein."
+    except:
+        return {"error": "Invalid JSON response from API"}
 
-        # Chat Completion format
-        if isinstance(data, dict) and "choices" in data:
-            return data["choices"][0]["message"]["content"]
-            
-        # Text Generation format
-        if isinstance(data, list) and len(data) > 0:
-            return data[0].get('generated_text', '⚠️ Response blank hai.')
-            
-        # Error messages
-        if isinstance(data, dict) and "error" in data:
-            return f"⚠️ API Error: {data['error']}"
+    if "choices" in data and len(data["choices"]) > 0:
+        return data["choices"][0]["message"]["content"]
 
-        return "⚠️ Unexpected response format from AI."
+    return data
+
+
+
+
+# 4. TOOL FUNCTIONS
+def handle_math(equation):
+    try:
+        # Safe math evaluation
+        allowed_names = {"sqrt": math.sqrt, "pi": math.pi, "sin": math.sin, "cos": math.cos, "tan": math.tan}
+        result = eval(equation, {"__builtins__": None}, allowed_names)
+        return f"🔢 Result: {result}"
     except Exception as e:
-        return f"⚠️ Connection Error: {str(e)}"
+        return f"❌ Math Error: {e}"
 
-# --- 3. WEB ROUTES ---
-@app.route('/')
-def index():
-    return render_template('chat.html')
 
-@app.route('/ask', methods=['POST'])
-def ask():
-    data = request.json
-    if not data or "message" not in data:
-        return jsonify({"reply": "⚠️ No message received."})
+# Global To-Do List
+todo_list = []
+
+def handle_todo(action, task_text):
+    if action == "add":
+        todo_list.append(task_text)
+        return f"✅ Added: '{task_text}'"
+    elif action == "list":
+        if not todo_list: return "📂 Your list is empty."
+        return "\n".join([f"{i+1}. {t}" for i, t in enumerate(todo_list)])
     
-    user_data = data.get("message")
+def handle_todo_remove(arg):
+    if not todo_list:
+        return "📂 Your list is empty."
+
+    # If the user passed a number -> remove by index
+    if arg.isdigit():
+        idx = int(arg) - 1
+        if 0 <= idx < len(todo_list):
+            removed = todo_list.pop(idx)
+            return f"🗑️ Removed: '{removed}'"
+        return "⚠️ Invalid index."
+
+    # Otherwise -> remove by matching text
+    for t in todo_list:
+        if t.lower() == arg.lower():
+            todo_list.remove(t)
+            return f"🗑️ Removed: '{t}'"
     
-    # Math command check
-    if user_data.startswith("/math"):
-        equation = user_data.replace("/math", "").strip()
+    return "⚠️ Task not found."
+
+
+
+
+def handle_todo_edit(arg):
+    if "|" not in arg:
+        return "⚠️ Usage: /edit old text | new text"
+
+    old, new = [x.strip() for x in arg.split("|", 1)]
+
+    # If the user entered an index instead of old text
+    if old.isdigit():
+        idx = int(old) - 1
+        if 0 <= idx < len(todo_list):
+            old_text = todo_list[idx]
+            todo_list[idx] = new
+            return f"✏️ Updated: '{old_text}' → '{new}'"
+        return "⚠️ Invalid index."
+
+    # Edit by matching text
+    for i, t in enumerate(todo_list):
+        if t.lower() == old.lower():
+            todo_list[i] = new
+            return f"✏️ Updated: '{t}' → '{new}'"
+
+    return "⚠️ Task not found."
+
+
+
+
+# 5. THE CLI PARSER LOOP
+def start_app():
+    print("🎓 Student AI Assistant (Requests Version) Online.")
+    print("Commands: /todo [task], /math [eq], or type a question.\n")
+
+    while True:
         try:
-            allowed_names = {"sqrt": math.sqrt, "pi": math.pi, "sin": math.sin}
-            result = eval(equation, {"__builtins__": None}, allowed_names)
-            return jsonify({"reply": f"🔢 Result: {result}"})
-        except Exception as e:
-            return jsonify({"reply": f"❌ Math Error: {str(e)}"})
+            user_input = input("You > ").strip()
+            
+            if user_input.lower() in ["exit", "quit"]:
+                print("👋 Bye!")
+                break
+            
+            if not user_input: continue
 
-    # AI call
-    bot_reply = query_mistral(user_data)
-    return jsonify({"reply": bot_reply})
+            # --- PARSER LOGIC ---
+            if user_input.startswith("/"):
+                # Split "/command argument" into ["/command", "argument"]
+                parts = user_input.split(" ", 1)
+                cmd = parts[0].lower()
+                arg = parts[1] if len(parts) > 1 else ""
 
-# --- 4. SERVER START ---
+                if cmd == "/todo":
+                    if arg: 
+                        print(handle_todo("add", arg))
+                    else: 
+                        print(handle_todo("list", ""))
+
+                elif cmd == "/remove":
+                    if arg:
+                       print(handle_todo_remove(arg))
+                    else:
+                        print("⚠️ Usage: /remove 2   or   /remove task name")
+
+                elif cmd == "/edit":
+                    if arg:
+                        print(handle_todo_edit(arg))
+                    else:
+                        print("⚠️ Usage: /edit old | new")
+
+                elif cmd == "/math":
+                    if arg:
+                        print(handle_math(arg))
+                    else:
+                        print("⚠️ Usage: /math 22/7")
+                
+                else:
+                    print(f"❓ Unknown command: {cmd}")
+
+
+
+            # --- CHAT LOGIC ---
+            else:
+                # Send to Mistral via Requests
+                answer = query_mistral(user_input)
+                print(f"\nAI: {answer}\n")
+
+        except KeyboardInterrupt:
+            print("\n👋 Bye!")
+            break
+
 if __name__ == "__main__":
-    app.run(debug=True, port=5000)
+    start_app()
