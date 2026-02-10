@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -41,7 +41,9 @@
             <li><a href="#features">Features</a></li>
             <li><a href="#services">Services</a></li>
             <li><a href="#about">About</a></li>
-            <li><a href="#" class="btn-login" id="openLoginBtn">Login</a></li>
+            <li id="auth-ui-section">
+              <a href="#" class="btn-login" id="openLoginBtn">Login</a>
+            </li>
           </ul>
 
           <div class="hamburger" id="hamburger">
@@ -108,12 +110,17 @@
 
           <div class="service-card" data-service="PDF Editor">
             <div class="icon-box"><i class="fa-solid fa-file-pdf"></i></div>
-            <h3>Advanced PDF Editor</h3>
+            <h3>Advanced Resume maker</h3>
             <p>
               Highlight, annotate, merge, or split lecture slides directly in
               the browser.
             </p>
-            <button class="card-btn">Try Now</button>
+
+            <a
+              href="http://localhost/ai-student-assistant/backend/resume/resume_form.php?style=modern"
+              class="card-btn"
+              >Try Now</a
+            >
           </div>
 
           <div class="service-card" data-service="Notes Generator">
@@ -193,24 +200,40 @@
               <a href="#" class="forgot-link">Forgot Password?</a>
             </div>
 
-            <button type="submit" class="btn-full">Login</button>
+            <button id="auth-section" type="submit" class="btn-full">
+              Login
+            </button>
           </form>
 
           <div class="social-divider">
             <span>Or continue with</span>
           </div>
+
           <div class="social-buttons">
-            <button class="social-btn google">
+            <button
+              onclick="loginWithGoogle()"
+              class="social-btn google"
+              title="Login with Google"
+            >
               <i class="fa-brands fa-google"></i>
             </button>
-            <button class="social-btn facebook">
+
+            <button
+              onclick="loginWithFacebook()"
+              class="social-btn facebook"
+              title="Login with Facebook"
+            >
               <i class="fa-brands fa-facebook-f"></i>
             </button>
-            <button class="social-btn github">
+
+            <button
+              onclick="loginWithGithub()"
+              class="social-btn github"
+              title="Login with GitHub"
+            >
               <i class="fa-brands fa-github"></i>
             </button>
           </div>
-
           <div class="switch-link">
             Don't have an account?
             <a href="#" onclick="switchAuthMode('signup')">Sign Up</a>
@@ -284,5 +307,52 @@
     </div>
 
     <script src="script.js"></script>
+
+    <script type="module">
+      import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+      import {
+        getAuth,
+        GoogleAuthProvider,
+        GithubAuthProvider,
+        FacebookAuthProvider,
+        signInWithPopup,
+      } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+
+      // Ye configuration aapko Firebase Console > Project Settings > Web App se milegi
+      const firebaseConfig = {
+        apiKey: "AIzaSyDfQN2ACyIMUwR7erB1zDPaf_2RMNJkUAg",
+        authDomain: "ai-assistant-281b4.firebaseapp.com",
+        projectId: "ai-assistant-281b4",
+        storageBucket: "ai-assistant-281b4.appspot.com",
+        messagingSenderId: "495654908257",
+        appId: "1:495654908257:web:9f19cc1a5deca3213f5520",
+        measurementId: "G-Y0HK6SN86P",
+      };
+
+      // Initialize Firebase
+      const app = initializeApp(firebaseConfig);
+      const auth = getAuth(app);
+
+      // Providers setup
+      const googleProvider = new GoogleAuthProvider();
+      const githubProvider = new GithubAuthProvider();
+      const facebookProvider = new FacebookAuthProvider();
+
+      // Ab functions ko window object mein dalna hoga taaki HTML buttons inhe access kar sakein
+      window.loginWithGoogle = () => socialLogin(googleProvider);
+      window.loginWithGithub = () => socialLogin(githubProvider);
+      window.loginWithFacebook = () => socialLogin(facebookProvider);
+
+      function socialLogin(provider) {
+        signInWithPopup(auth, provider)
+          .then((result) => {
+            console.log("Login Success:", result.user);
+            window.location.href = "dashboard.html"; // Login ke baad redirection
+          })
+          .catch((error) => {
+            alert("Login Failed: " + error.message);
+          });
+      }
+    </script>
   </body>
 </html>

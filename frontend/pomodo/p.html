@@ -1,0 +1,1728 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pomodoro Focus Timer</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Roboto+Slab:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #4a6fa5;
+            --secondary: #166088;
+            --accent: #ff6b6b;
+            --accent-light: #ff9e7d;
+            --light: #f8f9fa;
+            --dark: #343a40;
+            --success: #51cf66;
+            --gray: #adb5bd;
+            --shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            --radius: 16px;
+            --transition: all 0.3s ease;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            color: var(--dark);
+            min-height: 100vh;
+            padding: 20px;
+            transition: var(--transition);
+        }
+
+        body.focus-mode {
+            background: #1a1a2e;
+            color: #f1f1f1;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            position: relative;
+        }
+
+        header {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding: 20px 0;
+            gap: 20px;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-shrink: 0;
+        }
+
+        .logo i {
+            font-size: 28px;
+            color: var(--accent);
+        }
+
+        .logo h1 {
+            font-family: 'Roboto Slab', serif;
+            font-size: clamp(20px, 4vw, 28px);
+            font-weight: 600;
+            background: linear-gradient(to right, var(--primary), var(--accent));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+
+        body.focus-mode .logo h1 {
+            background: linear-gradient(to right, #ff9e7d, #ff6b6b);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+
+        .controls {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border-radius: 50px;
+            border: none;
+            background: white;
+            color: var(--dark);
+            font-weight: 500;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: var(--shadow);
+            transition: var(--transition);
+            font-size: clamp(14px, 2vw, 16px);
+            white-space: nowrap;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-accent {
+            background: var(--accent);
+            color: white;
+        }
+
+        .btn i {
+            font-size: 16px;
+        }
+
+        .content {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .timer-section, .stats-section {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: var(--radius);
+            padding: 25px;
+            box-shadow: var(--shadow);
+            transition: var(--transition);
+            min-height: 400px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        body.focus-mode .timer-section,
+        body.focus-mode .stats-section {
+            background: rgba(30, 30, 46, 0.95);
+            color: #f1f1f1;
+        }
+
+        .section-title {
+            font-size: clamp(18px, 3vw, 22px);
+            margin-bottom: 20px;
+            color: var(--secondary);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        body.focus-mode .section-title {
+            color: var(--accent-light);
+        }
+
+        .timer-container {
+            text-align: center;
+            margin: 20px 0;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .timer-display {
+            font-size: clamp(60px, 12vw, 100px);
+            font-weight: 700;
+            color: var(--secondary);
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+            margin-bottom: 15px;
+            font-family: 'Roboto Slab', serif;
+            line-height: 1;
+        }
+
+        body.focus-mode .timer-display {
+            color: var(--accent-light);
+        }
+
+        .timer-phase {
+            font-size: clamp(18px, 3vw, 24px);
+            color: var(--accent);
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+
+        .timer-controls {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 25px;
+            flex-wrap: wrap;
+        }
+
+        .timer-btn {
+            padding: 12px 20px;
+            font-size: clamp(16px, 2vw, 18px);
+            border-radius: 50px;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 600;
+            transition: var(--transition);
+            min-width: 120px;
+            justify-content: center;
+        }
+
+        .timer-btn-start {
+            background: var(--success);
+            color: white;
+        }
+
+        .timer-btn-pause {
+            background: #ffd43b;
+            color: var(--dark);
+        }
+
+        .timer-btn-reset {
+            background: var(--gray);
+            color: white;
+        }
+
+        .timer-presets {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+
+        .preset-btn {
+            padding: 10px 15px;
+            border-radius: 50px;
+            border: 2px solid var(--primary);
+            background: transparent;
+            color: var(--primary);
+            cursor: pointer;
+            font-weight: 500;
+            transition: var(--transition);
+            font-size: 14px;
+            min-width: 70px;
+        }
+
+        .preset-btn:hover, .preset-btn.active {
+            background: var(--primary);
+            color: white;
+        }
+
+        body.focus-mode .preset-btn {
+            border-color: var(--accent-light);
+            color: var(--accent-light);
+        }
+
+        body.focus-mode .preset-btn:hover,
+        body.focus-mode .preset-btn.active {
+            background: var(--accent-light);
+            color: #1a1a2e;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: 12px;
+            padding: 15px;
+            text-align: center;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            transition: var(--transition);
+        }
+
+        body.focus-mode .stat-card {
+            background: rgba(40, 40, 60, 0.9);
+        }
+
+        .stat-value {
+            font-size: clamp(24px, 5vw, 36px);
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 5px;
+            line-height: 1;
+        }
+
+        body.focus-mode .stat-value {
+            color: var(--accent-light);
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: var(--gray);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .ai-suggestion {
+            background: linear-gradient(to right, #e3f2fd, #f3e5f5);
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: auto;
+            display: flex;
+            align-items: flex-start;
+            gap: 15px;
+            transition: var(--transition);
+        }
+
+        body.focus-mode .ai-suggestion {
+            background: linear-gradient(to right, #2d2d44, #3d2d44);
+        }
+
+        .ai-icon {
+            font-size: 24px;
+            color: var(--accent);
+            flex-shrink: 0;
+        }
+
+        .ai-text h4 {
+            margin-bottom: 8px;
+            color: var(--secondary);
+            font-size: 16px;
+        }
+
+        body.focus-mode .ai-text h4 {
+            color: var(--accent-light);
+        }
+
+        .ai-text p {
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .task-section {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: var(--radius);
+            padding: 25px;
+            box-shadow: var(--shadow);
+            transition: var(--transition);
+        }
+
+        body.focus-mode .task-section {
+            background: rgba(30, 30, 46, 0.95);
+        }
+
+        .task-input {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .task-input input {
+            flex: 1;
+            padding: 12px 15px;
+            border-radius: 10px;
+            border: 2px solid #e9ecef;
+            font-size: 16px;
+            transition: var(--transition);
+            min-width: 200px;
+        }
+
+        body.focus-mode .task-input input {
+            background: #2d2d44;
+            border-color: #4a4a6e;
+            color: #f1f1f1;
+        }
+
+        .task-list {
+            list-style: none;
+            max-height: 300px;
+            overflow-y: auto;
+            padding-right: 10px;
+        }
+
+        .task-list::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .task-list::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+
+        .task-list::-webkit-scrollbar-thumb {
+            background: var(--primary);
+            border-radius: 10px;
+        }
+
+        .task-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            border-bottom: 1px solid #e9ecef;
+            transition: var(--transition);
+            gap: 10px;
+        }
+
+        body.focus-mode .task-item {
+            border-color: #4a4a6e;
+        }
+
+        .task-item:last-child {
+            border-bottom: none;
+        }
+
+        .task-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            flex: 1;
+            min-width: 0;
+        }
+
+        .task-checkbox {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+
+        .task-name {
+            font-size: 16px;
+            word-break: break-word;
+        }
+
+        .task-name.completed {
+            text-decoration: line-through;
+            color: var(--gray);
+        }
+
+        .task-pomodoros {
+            background: var(--primary);
+            color: white;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 14px;
+            white-space: nowrap;
+        }
+
+        .delete-task {
+            background: transparent;
+            border: none;
+            color: var(--accent);
+            cursor: pointer;
+            font-size: 16px;
+            padding: 5px;
+            margin-left: 10px;
+        }
+
+        /* Floating Timer - ALWAYS VISIBLE */
+        .floating-timer {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background: var(--primary);
+            color: white;
+            padding: 15px 25px;
+            border-radius: 50px;
+            box-shadow: 0 6px 25px rgba(0, 0, 0, 0.4);
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            z-index: 9999;
+            cursor: move;
+            transition: var(--transition);
+            max-width: 350px;
+            backdrop-filter: blur(10px);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            user-select: none;
+            /* Make it always on top of everything */
+        }
+
+        .floating-timer.minimized {
+            padding: 10px 20px;
+            max-width: 200px;
+        }
+
+        .floating-timer.hidden {
+            display: none;
+        }
+
+        .floating-timer-content {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            min-width: 120px;
+        }
+
+        .floating-timer-label {
+            font-size: 12px;
+            opacity: 0.9;
+            font-weight: 500;
+        }
+
+        .floating-timer-display {
+            font-size: 28px;
+            font-weight: 700;
+            font-family: 'Roboto Slab', serif;
+            letter-spacing: 1px;
+        }
+
+        .floating-timer-phase {
+            font-size: 13px;
+            opacity: 0.9;
+            font-weight: 500;
+        }
+
+        .floating-timer-controls {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .floating-timer-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: var(--transition);
+        }
+
+        .floating-timer-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: scale(1.1);
+        }
+
+        .floating-timer.dragging {
+            opacity: 0.8;
+            cursor: grabbing;
+        }
+
+        /* Alert Message */
+        .alert-message {
+            position: fixed;
+            top: 30px;
+            right: 30px;
+            background: var(--accent);
+            color: white;
+            padding: 20px 25px;
+            border-radius: 12px;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            z-index: 10000;
+            transform: translateX(150%);
+            transition: transform 0.5s ease;
+            max-width: 350px;
+        }
+
+        .alert-message.show {
+            transform: translateX(0);
+        }
+
+        .alert-icon {
+            font-size: 24px;
+            flex-shrink: 0;
+        }
+
+        .alert-text {
+            flex: 1;
+        }
+
+        .alert-text strong {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 16px;
+        }
+
+        .alert-text p {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        /* Browser notification style */
+        .browser-notification {
+            position: fixed;
+            top: 80px;
+            right: 30px;
+            background: white;
+            color: var(--dark);
+            padding: 15px 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            z-index: 10000;
+            transform: translateX(150%);
+            transition: transform 0.5s ease;
+            border-left: 5px solid var(--accent);
+            max-width: 300px;
+        }
+
+        .browser-notification.show {
+            transform: translateX(0);
+        }
+
+        .browser-notification i {
+            color: var(--accent);
+            font-size: 20px;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            header {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .controls {
+                justify-content: center;
+            }
+            
+            .content {
+                gap: 20px;
+            }
+            
+            .timer-section, .stats-section, .task-section {
+                padding: 20px;
+            }
+            
+            .timer-controls {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .timer-btn {
+                width: 100%;
+                max-width: 250px;
+            }
+            
+            .task-input {
+                flex-direction: column;
+            }
+            
+            .task-input input {
+                min-width: 100%;
+            }
+            
+            .floating-timer {
+                bottom: 20px;
+                right: 20px;
+                left: 20px;
+                max-width: none;
+                justify-content: space-between;
+            }
+            
+            .alert-message, .browser-notification {
+                top: 20px;
+                right: 20px;
+                left: 20px;
+                max-width: none;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .stats-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+            
+            .timer-presets {
+                gap: 5px;
+            }
+            
+            .preset-btn {
+                min-width: 60px;
+                padding: 8px 12px;
+                font-size: 13px;
+            }
+            
+            .floating-timer {
+                padding: 12px 20px;
+                gap: 15px;
+            }
+            
+            .floating-timer.minimized {
+                max-width: 150px;
+                padding: 8px 15px;
+            }
+            
+            .floating-timer-display {
+                font-size: 22px;
+            }
+        }
+
+        .completed-animation {
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        .empty-tasks {
+            text-align: center;
+            padding: 30px 20px;
+            color: var(--gray);
+            font-style: italic;
+        }
+        
+        /* Notification permission button */
+        .notification-permission {
+            position: fixed;
+            bottom: 100px;
+            right: 30px;
+            background: var(--success);
+            color: white;
+            padding: 15px 20px;
+            border-radius: 50px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            z-index: 10000;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+        
+        .notification-permission:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+        }
+        
+        .notification-permission.hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="logo">
+                <i class="fas fa-brain"></i>
+                <h1>FocusFlow Pomodoro</h1>
+            </div>
+            <div class="controls">
+                <button class="btn" id="focusModeBtn">
+                    <i class="fas fa-moon"></i> Focus Mode
+                </button>
+                <button class="btn btn-primary" id="statsBtn">
+                    <i class="fas fa-chart-bar"></i> Stats
+                </button>
+            </div>
+        </header>
+
+        <div class="content">
+            <div class="timer-section">
+                <h2 class="section-title"><i class="fas fa-clock"></i> Pomodoro Timer</h2>
+                <div class="timer-container">
+                    <div class="timer-phase" id="phaseText">Focus Time</div>
+                    <div class="timer-display" id="timerDisplay">25:00</div>
+                    
+                    <div class="timer-controls">
+                        <button class="timer-btn timer-btn-start" id="startBtn">
+                            <i class="fas fa-play"></i> Start
+                        </button>
+                        <button class="timer-btn timer-btn-pause" id="pauseBtn" disabled>
+                            <i class="fas fa-pause"></i> Pause
+                        </button>
+                        <button class="timer-btn timer-btn-reset" id="resetBtn" disabled>
+                            <i class="fas fa-redo"></i> Reset
+                        </button>
+                    </div>
+                    
+                    <div class="timer-presets">
+                        <button class="preset-btn active" data-time="25">25 min</button>
+                        <button class="preset-btn" data-time="30">30 min</button>
+                        <button class="preset-btn" data-time="45">45 min</button>
+                        <button class="preset-btn" data-time="50">50 min</button>
+                        <button class="preset-btn" data-time="15">15 min</button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="stats-section">
+                <h2 class="section-title"><i class="fas fa-chart-line"></i> Focus Statistics</h2>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-value" id="todayCount">0</div>
+                        <div class="stat-label">Today's Pomodoros</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="weekCount">0</div>
+                        <div class="stat-label">This Week</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="totalCount">0</div>
+                        <div class="stat-label">Total Completed</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="focusTime">0h 0m</div>
+                        <div class="stat-label">Focus Time Today</div>
+                    </div>
+                </div>
+                
+                <div class="ai-suggestion">
+                    <div class="ai-icon">
+                        <i class="fas fa-robot"></i>
+                    </div>
+                    <div class="ai-text">
+                        <h4>AI Suggestion</h4>
+                        <p id="suggestionText">Start with a 25-minute focus session. Remember to eliminate distractions!</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="task-section">
+            <h2 class="section-title"><i class="fas fa-tasks"></i> Task-Based Pomodoros</h2>
+            <div class="task-input">
+                <input type="text" id="taskInput" placeholder="Add a task to work on during Pomodoro...">
+                <button class="btn btn-accent" id="addTaskBtn">
+                    <i class="fas fa-plus"></i> Add Task
+                </button>
+            </div>
+            <ul class="task-list" id="taskList">
+                <!-- Tasks will be added here dynamically -->
+            </ul>
+        </div>
+    </div>
+    
+    <!-- Floating Timer (ALWAYS VISIBLE) -->
+    <div class="floating-timer hidden" id="floatingTimer">
+        <div class="floating-timer-content">
+            <div class="floating-timer-label" id="floatingTimerLabel">Pomodoro Timer</div>
+            <div class="floating-timer-display" id="floatingTimerDisplay">25:00</div>
+            <div class="floating-timer-phase" id="floatingTimerPhase">Focus Time</div>
+        </div>
+        <div class="floating-timer-controls">
+            <button class="floating-timer-btn" id="floatingTimerMinimize" title="Minimize">
+                <i class="fas fa-window-minimize"></i>
+            </button>
+            <button class="floating-timer-btn" id="floatingTimerClose" title="Close">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+    </div>
+    
+    <!-- Alert Notification -->
+    <div class="alert-message" id="alertMessage">
+        <div class="alert-icon">
+            <i class="fas fa-bell"></i>
+        </div>
+        <div class="alert-text">
+            <strong id="alertTitle">Break Time!</strong>
+            <p id="alertText">Time to take a short break. Stand up and stretch!</p>
+        </div>
+    </div>
+    
+    <!-- Browser Tab Notification -->
+    <div class="browser-notification" id="browserNotification">
+        <i class="fas fa-clock"></i>
+        <div class="browser-notification-text">
+            <strong id="browserNotificationTitle">Pomodoro Timer</strong>
+            <p id="browserNotificationText">Timer is running in the background</p>
+        </div>
+    </div>
+    
+    <!-- Notification Permission Button -->
+    <div class="notification-permission hidden" id="notificationPermission">
+        <i class="fas fa-bell"></i>
+        <span>Enable notifications for timer alerts</span>
+    </div>
+    
+    <!-- Audio for alerts -->
+    <audio id="alertSound" preload="auto">
+        <source src="https://assets.mixkit.co/sfx/preview/mixkit-alarm-digital-clock-beep-989.mp3" type="audio/mpeg">
+    </audio>
+    
+    <script>
+        // DOM Elements
+        const timerDisplay = document.getElementById('timerDisplay');
+        const phaseText = document.getElementById('phaseText');
+        const startBtn = document.getElementById('startBtn');
+        const pauseBtn = document.getElementById('pauseBtn');
+        const resetBtn = document.getElementById('resetBtn');
+        const presetBtns = document.querySelectorAll('.preset-btn');
+        const focusModeBtn = document.getElementById('focusModeBtn');
+        const statsBtn = document.getElementById('statsBtn');
+        const todayCountEl = document.getElementById('todayCount');
+        const weekCountEl = document.getElementById('weekCount');
+        const totalCountEl = document.getElementById('totalCount');
+        const focusTimeEl = document.getElementById('focusTime');
+        const suggestionText = document.getElementById('suggestionText');
+        const taskInput = document.getElementById('taskInput');
+        const addTaskBtn = document.getElementById('addTaskBtn');
+        const taskList = document.getElementById('taskList');
+        const alertMessage = document.getElementById('alertMessage');
+        const alertTitle = document.getElementById('alertTitle');
+        const alertText = document.getElementById('alertText');
+        const alertSound = document.getElementById('alertSound');
+        const floatingTimer = document.getElementById('floatingTimer');
+        const floatingTimerDisplay = document.getElementById('floatingTimerDisplay');
+        const floatingTimerPhase = document.getElementById('floatingTimerPhase');
+        const floatingTimerLabel = document.getElementById('floatingTimerLabel');
+        const floatingTimerMinimize = document.getElementById('floatingTimerMinimize');
+        const floatingTimerClose = document.getElementById('floatingTimerClose');
+        const browserNotification = document.getElementById('browserNotification');
+        const browserNotificationTitle = document.getElementById('browserNotificationTitle');
+        const browserNotificationText = document.getElementById('browserNotificationText');
+        const notificationPermission = document.getElementById('notificationPermission');
+        
+        // Timer Variables
+        let timer;
+        let timeLeft = 25 * 60; // 25 minutes in seconds
+        let isRunning = false;
+        let isFocusPhase = true;
+        let pomodoroCount = 0;
+        let totalFocusTime = 0; // in seconds
+        let selectedTime = 25;
+        
+        // For tracking time when tab is not active
+        let timerStartTime = 0;
+        let elapsedTimeWhenHidden = 0;
+        let tabHiddenTime = 0;
+        
+        // Stats tracking
+        let stats = {
+            today: 0,
+            week: 0,
+            total: 0,
+            focusTimeToday: 0
+        };
+        
+        // Tasks array
+        let tasks = [];
+        
+        // Initialize the app
+        function init() {
+            loadStats();
+            loadTasks();
+            updateStatsDisplay();
+            updateTimerDisplay();
+            generateAISuggestion();
+            setupFloatingTimerDrag();
+            
+            // Check for notification permission
+            checkNotificationPermission();
+            
+            // Set up event listeners
+            startBtn.addEventListener('click', startTimer);
+            pauseBtn.addEventListener('click', pauseTimer);
+            resetBtn.addEventListener('click', resetTimer);
+            focusModeBtn.addEventListener('click', toggleFocusMode);
+            statsBtn.addEventListener('click', showStats);
+            addTaskBtn.addEventListener('click', addTask);
+            taskInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') addTask();
+            });
+            
+            // Floating timer controls
+            floatingTimerMinimize.addEventListener('click', minimizeFloatingTimer);
+            floatingTimerClose.addEventListener('click', closeFloatingTimer);
+            notificationPermission.addEventListener('click', requestNotificationPermission);
+            
+            // Preset time buttons
+            presetBtns.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    presetBtns.forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    selectedTime = parseInt(btn.dataset.time);
+                    resetTimer();
+                });
+            });
+            
+            // Check if it's a new day for stats reset
+            checkNewDay();
+            
+            // Set up visibility change listener
+            document.addEventListener('visibilitychange', handleVisibilityChange);
+            
+            // Initialize service worker for background sync (if supported)
+            setupBackgroundSync();
+            
+            // Load any saved timer state
+            loadTimerState();
+        }
+        
+        // Timer functions with background tab support
+        function startTimer() {
+            if (isRunning) return;
+            
+            isRunning = true;
+            timerStartTime = Date.now();
+            elapsedTimeWhenHidden = 0;
+            
+            startBtn.disabled = true;
+            pauseBtn.disabled = false;
+            resetBtn.disabled = false;
+            
+            startBtn.innerHTML = '<i class="fas fa-play"></i> Running';
+            startBtn.classList.add('completed-animation');
+            
+            // Show floating timer
+            showFloatingTimer();
+            
+            // Save timer state
+            saveTimerState();
+            
+            // Update immediately
+            updateTimerDisplay();
+            updateFloatingTimer();
+            
+            // Start the timer
+            timer = setInterval(() => {
+                timeLeft--;
+                updateTimerDisplay();
+                updateFloatingTimer();
+                
+                // Track focus time during focus phase
+                if (isFocusPhase) {
+                    totalFocusTime++;
+                    stats.focusTimeToday++;
+                    updateFocusTimeDisplay();
+                }
+                
+                if (timeLeft <= 0) {
+                    completePhase();
+                }
+                
+                // Save timer state every 10 seconds
+                if (timeLeft % 10 === 0) {
+                    saveTimerState();
+                }
+            }, 1000);
+        }
+        
+        function pauseTimer() {
+            clearInterval(timer);
+            isRunning = false;
+            startBtn.disabled = false;
+            pauseBtn.disabled = true;
+            startBtn.innerHTML = '<i class="fas fa-play"></i> Resume';
+            startBtn.classList.remove('completed-animation');
+            
+            // Update floating timer
+            updateFloatingTimer();
+            
+            // Save timer state
+            saveTimerState();
+        }
+        
+        function resetTimer() {
+            clearInterval(timer);
+            isRunning = false;
+            timeLeft = selectedTime * 60;
+            isFocusPhase = true;
+            phaseText.textContent = 'Focus Time';
+            startBtn.disabled = false;
+            pauseBtn.disabled = true;
+            resetBtn.disabled = true;
+            startBtn.innerHTML = '<i class="fas fa-play"></i> Start';
+            startBtn.classList.remove('completed-animation');
+            
+            // Reset timer tracking
+            timerStartTime = 0;
+            elapsedTimeWhenHidden = 0;
+            
+            updateTimerDisplay();
+            updateFloatingTimer();
+            
+            // Hide floating timer when resetting
+            if (!isRunning) {
+                hideFloatingTimer();
+            }
+            
+            // Clear saved timer state
+            clearTimerState();
+        }
+        
+        function updateTimerDisplay() {
+            const minutes = Math.floor(timeLeft / 60);
+            const seconds = timeLeft % 60;
+            timerDisplay.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        }
+        
+        function completePhase() {
+            clearInterval(timer);
+            isRunning = false;
+            
+            if (isFocusPhase) {
+                // Focus phase completed
+                pomodoroCount++;
+                stats.today++;
+                stats.week++;
+                stats.total++;
+                
+                updateStatsDisplay();
+                saveStats();
+                
+                // Show alerts
+                showAlert('Break Time!', 'Great job! Take a short break to recharge.', 'success');
+                showBrowserNotification('Pomodoro Complete!', 'Time for a break. Click to return.');
+                
+                // Send browser notification if permitted
+                sendBrowserNotification('Pomodoro Complete!', 'Time for a break.');
+                
+                // Switch to break phase (short break 5 min, long break 15 min after 4 pomodoros)
+                isFocusPhase = false;
+                const isLongBreak = pomodoroCount % 4 === 0;
+                phaseText.textContent = isLongBreak ? 'Long Break' : 'Short Break';
+                timeLeft = isLongBreak ? 15 * 60 : 5 * 60;
+                
+                // Play alert sound
+                playAlertSound();
+                
+                // Update AI suggestion for break
+                generateAISuggestion();
+            } else {
+                // Break phase completed
+                showAlert('Focus Time!', 'Break is over. Ready for another Pomodoro session?', 'info');
+                showBrowserNotification('Break Time Over!', 'Ready for another focus session?');
+                
+                // Send browser notification if permitted
+                sendBrowserNotification('Break Time Over!', 'Ready for another focus session?');
+                
+                // Switch back to focus phase
+                isFocusPhase = true;
+                phaseText.textContent = 'Focus Time';
+                timeLeft = selectedTime * 60;
+                
+                // Play alert sound
+                playAlertSound();
+                
+                // Update AI suggestion for next focus session
+                generateAISuggestion();
+            }
+            
+            updateTimerDisplay();
+            updateFloatingTimer();
+            startBtn.disabled = false;
+            pauseBtn.disabled = true;
+            startBtn.innerHTML = '<i class="fas fa-play"></i> Start';
+            startBtn.classList.remove('completed-animation');
+            
+            // Clear saved timer state
+            clearTimerState();
+            
+            // Auto-start next pomodoro after break
+            if (!isFocusPhase) {
+                setTimeout(() => {
+                    if (confirm('Break time is over! Start next Pomodoro session?')) {
+                        startTimer();
+                    }
+                }, 1000);
+            }
+        }
+        
+        // Handle tab visibility changes
+        function handleVisibilityChange() {
+            if (document.hidden) {
+                // Tab is now hidden
+                tabHiddenTime = Date.now();
+                
+                if (isRunning) {
+                    // Save the current elapsed time
+                    elapsedTimeWhenHidden = Date.now() - timerStartTime;
+                    
+                    // Show browser notification that timer is running in background
+                    showBrowserNotification('Timer Running', 'Pomodoro timer is active in background');
+                }
+            } else {
+                // Tab is now visible
+                if (isRunning && tabHiddenTime > 0) {
+                    // Calculate how much time passed while tab was hidden
+                    const timeHidden = Date.now() - tabHiddenTime;
+                    
+                    // Adjust the timer based on actual elapsed time
+                    const totalElapsed = elapsedTimeWhenHidden + timeHidden;
+                    const secondsElapsed = Math.floor(totalElapsed / 1000);
+                    
+                    // Update timeLeft based on actual elapsed seconds
+                    timeLeft = Math.max(0, (selectedTime * 60) - secondsElapsed);
+                    
+                    // If timer should have completed while hidden
+                    if (timeLeft <= 0) {
+                        completePhase();
+                    } else {
+                        // Restart timer with corrected time
+                        clearInterval(timer);
+                        timerStartTime = Date.now() - totalElapsed;
+                        
+                        timer = setInterval(() => {
+                            timeLeft--;
+                            updateTimerDisplay();
+                            updateFloatingTimer();
+                            
+                            if (isFocusPhase) {
+                                totalFocusTime++;
+                                stats.focusTimeToday++;
+                                updateFocusTimeDisplay();
+                            }
+                            
+                            if (timeLeft <= 0) {
+                                completePhase();
+                            }
+                        }, 1000);
+                    }
+                    
+                    // Update displays
+                    updateTimerDisplay();
+                    updateFloatingTimer();
+                }
+                
+                // Hide browser notification when tab becomes visible
+                hideBrowserNotification();
+            }
+        }
+        
+        // Floating Timer Functions
+        function showFloatingTimer() {
+            floatingTimer.classList.remove('hidden');
+            floatingTimer.classList.remove('minimized');
+            
+            // Save floating timer state
+            localStorage.setItem('floatingTimerVisible', 'true');
+        }
+        
+        function hideFloatingTimer() {
+            floatingTimer.classList.add('hidden');
+            localStorage.setItem('floatingTimerVisible', 'false');
+        }
+        
+        function minimizeFloatingTimer() {
+            floatingTimer.classList.toggle('minimized');
+        }
+        
+        function closeFloatingTimer() {
+            hideFloatingTimer();
+        }
+        
+        function updateFloatingTimer() {
+            if (!isRunning && floatingTimer.classList.contains('hidden')) {
+                return;
+            }
+            
+            // Update floating timer display
+            const minutes = Math.floor(timeLeft / 60);
+            const seconds = timeLeft % 60;
+            floatingTimerDisplay.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            
+            // Update phase
+            floatingTimerPhase.textContent = isFocusPhase ? 'Focus Time' : (pomodoroCount % 4 === 0 ? 'Long Break' : 'Short Break');
+            floatingTimerLabel.textContent = isRunning ? 'Pomodoro Active' : 'Pomodoro Timer';
+            
+            // Change color based on phase
+            if (isFocusPhase) {
+                floatingTimer.style.background = 'var(--primary)';
+            } else {
+                floatingTimer.style.background = 'var(--accent)';
+            }
+            
+            // Make sure it's visible if timer is running
+            if (isRunning && floatingTimer.classList.contains('hidden')) {
+                showFloatingTimer();
+            }
+        }
+        
+        // Make floating timer draggable
+        function setupFloatingTimerDrag() {
+            const timer = floatingTimer;
+            let isDragging = false;
+            let offsetX, offsetY;
+            
+            timer.addEventListener('mousedown', startDrag);
+            timer.addEventListener('touchstart', startDrag);
+            
+            function startDrag(e) {
+                isDragging = true;
+                timer.classList.add('dragging');
+                
+                const rect = timer.getBoundingClientRect();
+                
+                if (e.type === 'mousedown') {
+                    offsetX = e.clientX - rect.left;
+                    offsetY = e.clientY - rect.top;
+                    document.addEventListener('mousemove', onDrag);
+                    document.addEventListener('mouseup', stopDrag);
+                } else {
+                    const touch = e.touches[0];
+                    offsetX = touch.clientX - rect.left;
+                    offsetY = touch.clientY - rect.top;
+                    document.addEventListener('touchmove', onDrag);
+                    document.addEventListener('touchend', stopDrag);
+                }
+                
+                e.preventDefault();
+            }
+            
+            function onDrag(e) {
+                if (!isDragging) return;
+                
+                let clientX, clientY;
+                
+                if (e.type === 'mousemove') {
+                    clientX = e.clientX;
+                    clientY = e.clientY;
+                } else {
+                    clientX = e.touches[0].clientX;
+                    clientY = e.touches[0].clientY;
+                }
+                
+                // Calculate new position
+                const x = clientX - offsetX;
+                const y = clientY - offsetY;
+                
+                // Keep within viewport bounds
+                const maxX = window.innerWidth - timer.offsetWidth;
+                const maxY = window.innerHeight - timer.offsetHeight;
+                
+                timer.style.left = Math.max(0, Math.min(x, maxX)) + 'px';
+                timer.style.right = 'auto';
+                timer.style.top = Math.max(0, Math.min(y, maxY)) + 'px';
+                timer.style.bottom = 'auto';
+                
+                // Save position
+                localStorage.setItem('floatingTimerPos', JSON.stringify({
+                    x: timer.style.left,
+                    y: timer.style.top
+                }));
+            }
+            
+            function stopDrag() {
+                isDragging = false;
+                timer.classList.remove('dragging');
+                
+                document.removeEventListener('mousemove', onDrag);
+                document.removeEventListener('mouseup', stopDrag);
+                document.removeEventListener('touchmove', onDrag);
+                document.removeEventListener('touchend', stopDrag);
+            }
+            
+            // Load saved position
+            const savedPos = localStorage.getItem('floatingTimerPos');
+            if (savedPos) {
+                try {
+                    const pos = JSON.parse(savedPos);
+                    if (pos.x && pos.y) {
+                        timer.style.left = pos.x;
+                        timer.style.top = pos.y;
+                        timer.style.right = 'auto';
+                        timer.style.bottom = 'auto';
+                    }
+                } catch(e) {
+                    console.log('Error loading timer position:', e);
+                }
+            }
+        }
+        
+        // Timer state persistence
+        function saveTimerState() {
+            const timerState = {
+                timeLeft,
+                isRunning,
+                isFocusPhase,
+                selectedTime,
+                timerStartTime: isRunning ? timerStartTime : 0,
+                elapsedTimeWhenHidden,
+                pomodoroCount,
+                totalFocusTime,
+                lastUpdated: Date.now()
+            };
+            
+            localStorage.setItem('pomodoroTimerState', JSON.stringify(timerState));
+        }
+        
+        function loadTimerState() {
+            const savedState = localStorage.getItem('pomodoroTimerState');
+            if (savedState) {
+                try {
+                    const state = JSON.parse(savedState);
+                    
+                    // Check if state is recent (within last hour)
+                    const timeSinceUpdate = Date.now() - state.lastUpdated;
+                    const oneHour = 60 * 60 * 1000;
+                    
+                    if (timeSinceUpdate < oneHour) {
+                        timeLeft = state.timeLeft;
+                        isRunning = false; // Don't auto-start
+                        isFocusPhase = state.isFocusPhase;
+                        selectedTime = state.selectedTime;
+                        pomodoroCount = state.pomodoroCount || 0;
+                        totalFocusTime = state.totalFocusTime || 0;
+                        
+                        // Update preset buttons
+                        presetBtns.forEach(btn => {
+                            btn.classList.toggle('active', parseInt(btn.dataset.time) === selectedTime);
+                        });
+                        
+                        // Update UI
+                        updateTimerDisplay();
+                        phaseText.textContent = isFocusPhase ? 'Focus Time' : 'Break Time';
+                        
+                        // Show floating timer if it was visible
+                        const floatingTimerVisible = localStorage.getItem('floatingTimerVisible') === 'true';
+                        if (floatingTimerVisible) {
+                            showFloatingTimer();
+                        }
+                    } else {
+                        // State is too old, clear it
+                        clearTimerState();
+                    }
+                } catch(e) {
+                    console.log('Error loading timer state:', e);
+                    clearTimerState();
+                }
+            }
+        }
+        
+        function clearTimerState() {
+            localStorage.removeItem('pomodoroTimerState');
+        }
+        
+        // Browser notifications
+        function checkNotificationPermission() {
+            if ('Notification' in window && Notification.permission === 'default') {
+                notificationPermission.classList.remove('hidden');
+            }
+        }
+        
+        function requestNotificationPermission() {
+            if ('Notification' in window) {
+                Notification.requestPermission().then(permission => {
+                    if (permission === 'granted') {
+                        notificationPermission.classList.add('hidden');
+                        showAlert('Notifications Enabled', 'You will now receive timer alerts.', 'success');
+                    }
+                });
+            }
+        }
+        
+        function sendBrowserNotification(title, body) {
+            if ('Notification' in window && Notification.permission === 'granted') {
+                new Notification(title, {
+                    body: body,
+                    icon: 'https://cdn-icons-png.flaticon.com/512/3208/3208720.png',
+                    requireInteraction: true
+                });
+            }
+        }
+        
+        function showBrowserNotification(title, text) {
+            browserNotificationTitle.textContent = title;
+            browserNotificationText.textContent = text;
+            browserNotification.classList.add('show');
+            
+            setTimeout(() => {
+                hideBrowserNotification();
+            }, 5000);
+        }
+        
+        function hideBrowserNotification() {
+            browserNotification.classList.remove('show');
+        }
+        
+        // Background sync setup (for better background timer accuracy)
+        function setupBackgroundSync() {
+            if ('serviceWorker' in navigator && 'SyncManager' in window) {
+                navigator.serviceWorker.register('/sw.js').catch(err => {
+                    console.log('Service worker registration failed:', err);
+                });
+            }
+        }
+        
+        // Stats functions
+        function loadStats() {
+            const savedStats = localStorage.getItem('pomodoroStats');
+            if (savedStats) {
+                stats = JSON.parse(savedStats);
+                
+                // Check if stats are from today
+                const today = new Date().toDateString();
+                const lastSavedDate = localStorage.getItem('lastSavedDate');
+                
+                if (lastSavedDate !== today) {
+                    // Reset today's count if it's a new day
+                    stats.today = 0;
+                    stats.focusTimeToday = 0;
+                }
+                
+                // Check if it's a new week (simplified logic)
+                const weekStart = getWeekStartDate();
+                const lastWeekStart = localStorage.getItem('lastWeekStart');
+                
+                if (lastWeekStart !== weekStart) {
+                    stats.week = 0;
+                }
+            }
+        }
+        
+        function saveStats() {
+            localStorage.setItem('pomodoroStats', JSON.stringify(stats));
+            localStorage.setItem('lastSavedDate', new Date().toDateString());
+            localStorage.setItem('lastWeekStart', getWeekStartDate());
+        }
+        
+        function updateStatsDisplay() {
+            todayCountEl.textContent = stats.today;
+            weekCountEl.textContent = stats.week;
+            totalCountEl.textContent = stats.total;
+            updateFocusTimeDisplay();
+        }
+        
+        function updateFocusTimeDisplay() {
+            const hours = Math.floor(stats.focusTimeToday / 3600);
+            const minutes = Math.floor((stats.focusTimeToday % 3600) / 60);
+            focusTimeEl.textContent = `${hours}h ${minutes}m`;
+        }
+        
+        function checkNewDay() {
+            const today = new Date().toDateString();
+            const lastSavedDate = localStorage.getItem('lastSavedDate');
+            
+            if (lastSavedDate !== today) {
+                // New day, reset today's stats
+                stats.today = 0;
+                stats.focusTimeToday = 0;
+                saveStats();
+                updateStatsDisplay();
+            }
+        }
+        
+        function getWeekStartDate() {
+            const now = new Date();
+            const dayOfWeek = now.getDay();
+            const diff = now.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1); // Monday as first day
+            const weekStart = new Date(now.setDate(diff));
+            return weekStart.toDateString();
+        }
+        
+        function showStats() {
+            alert(`Focus Statistics:\n\nToday's Pomodoros: ${stats.today}\nThis Week: ${stats.week}\nTotal Completed: ${stats.total}\nFocus Time Today: ${Math.floor(stats.focusTimeToday/3600)}h ${Math.floor((stats.focusTimeToday%3600)/60)}m`);
+        }
+        
+        // AI Suggestion function
+        function generateAISuggestion() {
+            const suggestions = [
+                "Based on your productivity pattern, try a 25-minute focus session followed by a 5-minute break.",
+                "Consider taking a short walk during your break to refresh your mind.",
+                "Stay hydrated! Drink a glass of water before your next focus session.",
+                "Close all unnecessary browser tabs to minimize distractions.",
+                "Try the 50/10 rule: 50 minutes of focus, 10 minutes of break.",
+                "Listening to instrumental music can improve concentration during focus sessions.",
+                "After 4 Pomodoro sessions, take a longer 15-30 minute break.",
+                "Use your break to do some light stretching to avoid stiffness.",
+                "Focus on one task at a time. Multitasking reduces productivity.",
+                "Set a clear goal for what you want to accomplish in this Pomodoro session."
+            ];
+            
+            const breakSuggestions = [
+                "Stand up and stretch for a minute or two.",
+                "Look away from your screen to rest your eyes.",
+                "Take a few deep breaths to reset your focus.",
+                "Grab a healthy snack to refuel your energy.",
+                "Do a quick meditation or mindfulness exercise.",
+                "Hydrate with a glass of water.",
+                "Step outside for some fresh air if possible.",
+                "Do a quick desk exercise or walk around."
+            ];
+            
+            let suggestion;
+            
+            if (!isRunning && !isFocusPhase) {
+                // On break
+                suggestion = breakSuggestions[Math.floor(Math.random() * breakSuggestions.length)];
+            } else if (pomodoroCount >= 4) {
+                suggestion = "You've completed 4+ Pomodoros today! Consider taking a longer 20-30 minute break.";
+            } else if (stats.today === 0) {
+                suggestion = "Start with a 25-minute focus session. Remember to eliminate distractions!";
+            } else {
+                suggestion = suggestions[Math.floor(Math.random() * suggestions.length)];
+            }
+            
+            suggestionText.textContent = suggestion;
+        }
+        
+        // Task management functions
+        function loadTasks() {
+            const savedTasks = localStorage.getItem('pomodoroTasks');
+            if (savedTasks) {
+                tasks = JSON.parse(savedTasks);
+                renderTasks();
+            }
+        }
+        
+        function saveTasks() {
+            localStorage.setItem('pomodoroTasks', JSON.stringify(tasks));
+        }
+        
+        function addTask() {
+            const taskName = taskInput.value.trim();
+            if (taskName === '') return;
+            
+            const newTask = {
+                id: Date.now(),
+                name: taskName,
+                completed: false,
+                pomodoros: 0
+            };
+            
+            tasks.push(newTask);
+            taskInput.value = '';
+            renderTasks();
+            saveTasks();
+        }
+        
+        function toggleTaskCompletion(id) {
+            const task = tasks.find(t => t.id === id);
+            if (task) {
+                task.completed = !task.completed;
+                if (task.completed && isFocusPhase && isRunning) {
+                    task.pomodoros++;
+                }
+                renderTasks();
+                saveTasks();
+            }
+        }
+        
+        function deleteTask(id) {
+            tasks = tasks.filter(t => t.id !== id);
+            renderTasks();
+            saveTasks();
+        }
+        
+        function renderTasks() {
+            taskList.innerHTML = '';
+            
+            if (tasks.length === 0) {
+                taskList.innerHTML = '<div class="empty-tasks">No tasks added yet. Add a task to track your Pomodoro sessions.</div>';
+                return;
+            }
+            
+            tasks.forEach(task => {
+                const taskItem = document.createElement('li');
+                taskItem.className = 'task-item';
+                
+                taskItem.innerHTML = `
+                    <div class="task-info">
+                        <input type="checkbox" class="task-checkbox" ${task.completed ? 'checked' : ''}>
+                        <span class="task-name ${task.completed ? 'completed' : ''}">${task.name}</span>
+                    </div>
+                    <div style="display: flex; align-items: center;">
+                        <span class="task-pomodoros">${task.pomodoros} 🍅</span>
+                        <button class="delete-task" data-id="${task.id}">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                `;
+                
+                const checkbox = taskItem.querySelector('.task-checkbox');
+                checkbox.addEventListener('change', () => toggleTaskCompletion(task.id));
+                
+                const deleteBtn = taskItem.querySelector('.delete-task');
+                deleteBtn.addEventListener('click', () => deleteTask(task.id));
+                
+                taskList.appendChild(taskItem);
+            });
+        }
+        
+        // Focus mode toggle
+        function toggleFocusMode() {
+            document.body.classList.toggle('focus-mode');
+            const isFocusMode = document.body.classList.contains('focus-mode');
+            focusModeBtn.innerHTML = isFocusMode ? 
+                '<i class="fas fa-sun"></i> Light Mode' : 
+                '<i class="fas fa-moon"></i> Focus Mode';
+            
+            if (isFocusMode) {
+                showAlert('Focus Mode Activated', 'Distractions minimized. Time to focus!', 'info');
+            }
+        }
+        
+        // Alert notification
+        function showAlert(title, text, type) {
+            alertTitle.textContent = title;
+            alertText.textContent = text;
+            
+            // Set color based on type
+            if (type === 'success') {
+                alertMessage.style.background = 'var(--success)';
+            } else if (type === 'info') {
+                alertMessage.style.background = 'var(--primary)';
+            } else {
+                alertMessage.style.background = 'var(--accent)';
+            }
+            
+            alertMessage.classList.add('show');
+            
+            setTimeout(() => {
+                alertMessage.classList.remove('show');
+            }, 5000);
+        }
+        
+        function playAlertSound() {
+            alertSound.currentTime = 0;
+            alertSound.play().catch(e => console.log("Audio play failed:", e));
+        }
+        
+        // Initialize the app when DOM is loaded
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>

@@ -1,0 +1,65 @@
+:root {
+    --primary: #6366f1;
+    --primary-dark: #4f46e5;
+    --glass: rgba(255, 255, 255, 0.8);
+    --shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.1);
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
+body { background: #f8fafc; color: #1e293b; overflow-x: hidden; }
+
+/* Professional Navbar */
+#navbar {
+    background: var(--glass);
+    backdrop-filter: blur(8px);
+    position: sticky; top: 0; z-index: 1000;
+    padding: 1rem 5%;
+    display: flex; justify-content: space-between; align-items: center;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+}
+
+.nav-links { list-style: none; display: flex; gap: 2rem; align-items: center; }
+.nav-links a { text-decoration: none; color: #64748b; font-weight: 500; transition: 0.3s; }
+.nav-links a:hover { color: var(--primary); }
+
+/* User Profile Styling */
+.profile-container { display: flex; align-items: center; gap: 10px; cursor: pointer; }
+.profile-circle {
+    width: 40px; height: 40px; border-radius: 50%;
+    border: 2px solid var(--primary); object-fit: cover;
+}
+
+/* Services Grid */
+.services-grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 2rem; padding: 4rem 5%;
+}
+
+.glass-card {
+    background: white; padding: 2.5rem; border-radius: 20px;
+    text-align: center; box-shadow: var(--shadow); transition: 0.3s;
+    border: 1px solid rgba(255,255,255,0.3);
+}
+
+.glass-card:hover { transform: translateY(-5px); }
+
+/* Permanent Floating Pomodoro Widget */
+.floating-timer-widget {
+    position: fixed; bottom: 25px; right: 25px;
+    width: 250px; background: white; border-radius: 20px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+    z-index: 9999; border: 2px solid var(--primary);
+    overflow: hidden;
+}
+
+.timer-header { background: var(--primary); color: white; padding: 12px; font-weight: 600; display: flex; justify-content: space-between; }
+#timer-display { font-size: 3rem; font-weight: 800; text-align: center; padding: 1rem 0; color: #1e293b; }
+
+.mini-controls { display: flex; justify-content: center; gap: 1rem; padding-bottom: 1.5rem; }
+.mini-controls button {
+    background: #f1f5f9; border: none; width: 45px; height: 45px;
+    border-radius: 50%; cursor: pointer; transition: 0.2s;
+}
+.mini-controls button:hover { background: var(--primary); color: white; }
+
+.hidden { display: none !important; }

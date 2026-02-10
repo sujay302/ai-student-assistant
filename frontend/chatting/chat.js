@@ -8,11 +8,11 @@ document.addEventListener('DOMContentLoaded', () => {
         chats: [],
         projects: [],
         currentChatId: null,
-        activeFilter: 'all', // 'all' or Project ID
+        activeFilter: 'all', 
         theme: 'light'
     };
 
-    // --- 2. DOM ELEMENTS (Safe Helper) ---
+    // --- 2. DOM ELEMENTS ---
     const get = (id) => document.getElementById(id);
     const els = {
         sidebar: get('sidebar'),
@@ -81,7 +81,6 @@ document.addEventListener('DOMContentLoaded', () => {
         document.documentElement.setAttribute('data-theme', theme);
         state.theme = theme;
         saveData();
-        // Update Icon Text
         const icon = theme === 'dark' ? '<i class="fa-solid fa-sun"></i> Light Mode' : '<i class="fa-solid fa-moon"></i> Dark Mode';
         if(get('toggleThemeBtn')) get('toggleThemeBtn').innerHTML = icon;
     }
@@ -98,6 +97,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function renderProjects() {
+        if(!els.projectList) return;
         els.projectList.innerHTML = '';
         state.projects.forEach(p => {
             const div = document.createElement('div');
@@ -110,8 +110,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function filterChats(filterId, name) {
         state.activeFilter = filterId;
-        renderProjects(); // Highlight active project
-        
+        renderProjects();
         if(filterId === 'all') {
             els.historyLabel.innerText = "All Chats";
             els.backToAllBtn.classList.add('hidden');
@@ -126,7 +125,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function createChat(type, title = 'New Chat') {
         const chat = {
             id: 'chat_' + Date.now(),
-            type, // 'ai' or 'group'
+            type,
             title,
             projectId: state.activeFilter !== 'all' ? state.activeFilter : null,
             messages: [],
@@ -136,9 +135,6 @@ document.addEventListener('DOMContentLoaded', () => {
         saveData();
         loadChat(chat.id);
         renderChatList();
-        
-        // Close Sidebar on Mobile
-        if(window.innerWidth <= 768) toggleSidebar(false);
     }
 
     function createGroup() {
@@ -160,84 +156,65 @@ document.addEventListener('DOMContentLoaded', () => {
         renderMessages(chat.messages);
         renderChatList();
     }
-    // --- NEW FUNCTIONS (Paste above renderChatList) ---
 
-function deleteChat(e, id) {
-    e.stopPropagation(); // ताकि चैट ओपन न हो जाए
-    if(confirm("Are you sure you want to delete this chat?")) {
-        state.chats = state.chats.filter(c => c.id !== id);
-        saveData();
-        
-        // अगर खुली हुई चैट डिलीट की है, तो स्क्रीन साफ़ करें
-        if(state.currentChatId === id) {
-            state.currentChatId = null;
-            els.messagesList.innerHTML = '';
-            els.welcomeScreen.classList.remove('hidden');
-            els.chatTitle.innerText = "Welcome";
-            els.chatSubtitle.innerText = "Select a chat";
+    function deleteChat(e, id) {
+        e.stopPropagation();
+        if(confirm("Are you sure you want to delete this chat?")) {
+            state.chats = state.chats.filter(c => c.id !== id);
+            saveData();
+            if(state.currentChatId === id) {
+                state.currentChatId = null;
+                els.messagesList.innerHTML = '';
+                els.welcomeScreen.classList.remove('hidden');
+            }
+            renderChatList();
         }
-        renderChatList();
     }
-}
 
-function renameChat(e, id) {
-    e.stopPropagation();
-    const chat = state.chats.find(c => c.id === id);
-    if(!chat) return;
-
-    const newName = prompt("Enter new chat name:", chat.title);
-    if(newName && newName.trim() !== "") {
-        chat.title = newName.trim();
-        saveData();
-        renderChatList();
-        if(state.currentChatId === id) els.chatTitle.innerText = chat.title;
+    function renameChat(e, id) {
+        e.stopPropagation();
+        const chat = state.chats.find(c => c.id === id);
+        if(!chat) return;
+        const newName = prompt("Enter new chat name:", chat.title);
+        if(newName && newName.trim() !== "") {
+            chat.title = newName.trim();
+            saveData();
+            renderChatList();
+            if(state.currentChatId === id) els.chatTitle.innerText = chat.title;
+        }
     }
-}
-// --- UPDATED RENDER LIST FUNCTION (Replace old one) ---
-function renderChatList() {
-    els.chatList.innerHTML = '';
-    const search = els.chatSearch.value.toLowerCase();
-    
-    const filtered = state.chats.filter(c => {
-        const matchesProject = state.activeFilter === 'all' || c.projectId === state.activeFilter;
-        const matchesSearch = c.title.toLowerCase().includes(search);
-        return matchesProject && matchesSearch;
-    });
 
-    filtered.forEach(chat => {
-        const div = document.createElement('div');
-        div.className = `history-item ${chat.id === state.currentChatId ? 'active' : ''}`;
-        
-        const icon = chat.type === 'group' ? '<i class="fa-solid fa-users chat-icon icon-group"></i>' : '<i class="fa-solid fa-robot chat-icon icon-ai"></i>';
-        
-        // HTML में एडिट और डिलीट बटन जोड़े गए हैं
-        div.innerHTML = `
-            <div style="display:flex; align-items:center; gap:10px; overflow:hidden;">
-                ${icon} 
-                <span class="history-title">${chat.title}</span>
-            </div>
-            <div class="history-actions">
-                <i class="fa-solid fa-pen action-icon" id="ren_${chat.id}" title="Rename"></i>
-                <i class="fa-solid fa-trash action-icon" id="del_${chat.id}" title="Delete"></i>
-            </div>
-        `;
-        
-        // चैट ओपन करने का क्लिक
-        div.onclick = () => {
-            loadChat(chat.id);
-            if(window.innerWidth <= 768) toggleSidebar(false);
-        };
+    function renderChatList() {
+        if(!els.chatList) return;
+        els.chatList.innerHTML = '';
+        const search = els.chatSearch.value.toLowerCase();
+        const filtered = state.chats.filter(c => {
+            const matchesProject = state.activeFilter === 'all' || c.projectId === state.activeFilter;
+            const matchesSearch = c.title.toLowerCase().includes(search);
+            return matchesProject && matchesSearch;
+        });
 
-        // बटन के लिए क्लिक इवेंट्स
-        const renBtn = div.querySelector(`#ren_${chat.id}`);
-        const delBtn = div.querySelector(`#del_${chat.id}`);
-        
-        if(renBtn) renBtn.onclick = (e) => renameChat(e, chat.id);
-        if(delBtn) delBtn.onclick = (e) => deleteChat(e, chat.id);
+        filtered.forEach(chat => {
+            const div = document.createElement('div');
+            div.className = `history-item ${chat.id === state.currentChatId ? 'active' : ''}`;
+            div.innerHTML = `
+                <div style="display:flex; align-items:center; gap:10px; overflow:hidden;">
+                    <i class="fa-solid ${chat.type === 'group' ? 'fa-users' : 'fa-robot'} chat-icon"></i> 
+                    <span class="history-title">${chat.title}</span>
+                </div>
+                <div class="history-actions">
+                    <i class="fa-solid fa-pen action-icon" onclick="event.stopPropagation(); window.renameChatManual('${chat.id}')"></i>
+                    <i class="fa-solid fa-trash action-icon" onclick="event.stopPropagation(); window.deleteChatManual('${chat.id}')"></i>
+                </div>
+            `;
+            div.onclick = () => loadChat(chat.id);
+            els.chatList.appendChild(div);
+        });
+    }
 
-        els.chatList.appendChild(div);
-    });
-}
+    // Manual triggers for global scope
+    window.renameChatManual = (id) => renameChat({stopPropagation:()=>{}}, id);
+    window.deleteChatManual = (id) => deleteChat({stopPropagation:()=>{}}, id);
 
     function renderMessages(msgs) {
         els.messagesList.innerHTML = '';
@@ -249,184 +226,104 @@ function renderChatList() {
         scrollToBottom();
     }
 
-    function appendMessageDOM(msg) {
-        const div = document.createElement('div');
-        const isUser = msg.sender === 'You';
-        
-        let roleClass = 'user';
-        let avatarIcon = 'U';
-        
-        if (msg.role === 'ai') { roleClass = 'ai'; avatarIcon = '<i class="fa-solid fa-robot"></i>'; }
-        else if (msg.role === 'group') { roleClass = 'group_member'; avatarIcon = msg.sender.charAt(0); }
+   function appendMessageDOM(msg) {
+    const messagesList = document.getElementById('messagesList'); // Ensure ye ID aapke HTML mein hai
+    if (!messagesList) return;
 
-        div.className = `message ${isUser ? 'user' : roleClass}`;
-        
-        let senderLabel = (!isUser && msg.role === 'group') ? `<div class="msg-sender">${msg.sender}</div>` : '';
-
-        div.innerHTML = `
-            <div class="avatar">${avatarIcon}</div>
-            <div>
-                ${senderLabel}
-                <div class="bubble">${msg.text}</div>
-            </div>
-        `;
-        els.messagesList.appendChild(div);
-    }
-// --- 8. MESSAGING (Updated for Backend) ---
-async function sendMessage() {
-    const text = els.input.value.trim();
-    if (!text) return;
+    const div = document.createElement('div');
+    const isUser = msg.sender === 'You';
     
-    // Check active chat
-    if (!state.currentChatId) return;
-    const chat = state.chats.find(c => c.id === state.currentChatId);
-    if (!chat) return;
+    // Aapke CSS classes (user aur ai) ke hisaab se
+    div.className = `message ${isUser ? 'user' : 'ai'}`; 
+    
+    div.innerHTML = `
+        <div class="avatar">${isUser ? 'U' : '<i class="fa-solid fa-robot"></i>'}</div>
+        <div class="content">
+            <div class="bubble">${msg.text}</div>
+        </div>
+    `;
+    messagesList.appendChild(div);
+    
+    // Auto scroll to bottom
+    const chatContainer = document.getElementById('chatContainer');
+    if(chatContainer) chatContainer.scrollTop = chatContainer.scrollHeight;
+}
 
-    // 1. User Message (Turant dikhayein)
-    const msg = { role: 'user', sender: 'You', text };
-    chat.messages.push(msg);
-    appendMessageDOM(msg);
-    els.input.value = ''; // Input khali karein
-    saveData();
+    // --- 8. MESSAGING (FIXED FOR FLASK) ---
+    async function sendMessage() {
+        const text = els.input.value.trim();
+        if (!text || !state.currentChatId) return;
 
-    // Scroll adjust
-    scrollToBottom();
+        const chat = state.chats.find(c => c.id === state.currentChatId);
+        if (!chat) return;
 
-    // 2. AI Response Logic
-    if (chat.type === 'ai') {
-        // Typing dikhayein
-        els.typingIndicator.classList.remove('hidden');
-        scrollToBottom();
-
-        // --- BACKEND CALL ---
-        // Yahan hum Backend se jawaab maang rahe hain
-        const aiResponseText = await generateAIResponse(text);
-
-        // Typing hatayein
-        els.typingIndicator.classList.add('hidden');
-
-        // AI Message add karein
-        const reply = { role: 'ai', sender: 'AI', text: aiResponseText };
-        chat.messages.push(reply);
-        appendMessageDOM(reply);
+        // User Message
+        const msg = { role: 'user', sender: 'You', text };
+        chat.messages.push(msg);
+        appendMessageDOM(msg);
+        els.input.value = '';
         saveData();
         scrollToBottom();
-    } 
-    else {
-        // Group Chat (Fake Simulation)
-        setTimeout(() => {
-            const member = chat.members[Math.floor(Math.random() * chat.members.length)];
-            const reply = { role: 'group', sender: member, text: "Interesting point! @You" };
+
+        if (chat.type === 'ai') {
+            els.typingIndicator.classList.remove('hidden');
+            scrollToBottom();
+
+            // Backend Call
+            const aiResponseText = await generateAIResponse(text);
+
+            els.typingIndicator.classList.add('hidden');
+            const reply = { role: 'ai', sender: 'AI', text: aiResponseText };
             chat.messages.push(reply);
             appendMessageDOM(reply);
             saveData();
             scrollToBottom();
-        }, 1500);
-    }
-}
-    // --- NEW: Function to Connect with Backend ---
-async function generateAIResponse(userMessage) {
-    try {
-        // Humare Backend Server ka address
-        const response = await fetch('http://localhost:3000/api/chat', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ message: userMessage })
-        });
-
-        const data = await response.json();
-        return data.reply || "Error: No reply from server.";
-    } catch (error) {
-        console.error("Backend Error:", error);
-        return "Error: Backend server is not running. Please run 'node server.js'";
-    }
-}
-
-    // --- 9. VOICE RECOGNITION (Restored) ---
-    function setupVoiceRecognition() {
-        if (!els.voiceBtn) return;
-        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-        if (SpeechRecognition) {
-            const recognition = new SpeechRecognition();
-            recognition.lang = 'en-US';
-            
-            recognition.onstart = () => { els.voiceBtn.classList.add('listening'); els.input.placeholder = "Listening..."; };
-            recognition.onend = () => { els.voiceBtn.classList.remove('listening'); els.input.placeholder = "Type a message..."; };
-            recognition.onresult = (e) => {
-                const transcript = e.results[0][0].transcript;
-                els.input.value = transcript;
-                els.sendBtn.disabled = false;
-                els.input.focus();
-            };
-            
-            els.voiceBtn.onclick = () => recognition.start();
-        } else {
-            els.voiceBtn.style.display = 'none';
         }
     }
 
-    // --- 10. MOVE MODAL ---
-    function openMoveModal() {
-        if(!state.currentChatId) return;
-        els.moveModal.classList.remove('hidden');
-        const list = document.getElementById('projectSelectContainer');
-        list.innerHTML = `<div onclick="window.moveToProject(null)"><i class="fa-solid fa-ban"></i> Remove from Project</div>`;
-        state.projects.forEach(p => {
-            list.innerHTML += `<div onclick="window.moveToProject('${p.id}')"><i class="fa-solid fa-folder"></i> ${p.name}</div>`;
-        });
+    // --- 9. BACKEND CONNECTION (FIXED) ---
+    async function generateAIResponse(userMessage) {
+        try {
+            // Using relative path for Flask
+            const response = await fetch('/ask', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ message: userMessage })
+            });
+
+            if (!response.ok) throw new Error("Server disconnected");
+
+            const data = await response.json();
+            return data.reply || "No response received.";
+        } catch (error) {
+            console.error("Backend Error:", error);
+            return "⚠️ Connection Error: Please make sure 'python main.py' is running.";
+        }
     }
 
-    window.moveToProject = (projId) => {
-        const chat = state.chats.find(c => c.id === state.currentChatId);
-        chat.projectId = projId;
-        saveData();
-        if(state.activeFilter !== 'all' && state.activeFilter !== projId) {
-            state.currentChatId = null;
-            els.messagesList.innerHTML = '';
-            els.welcomeScreen.classList.remove('hidden');
-        }
-        renderChatList();
-        closeAllModals();
-    };
-
-    // --- Utils ---
+    // --- Utils & Listeners ---
     function scrollToBottom() { els.chatContainer.scrollTop = els.chatContainer.scrollHeight; }
     function closeAllModals() { document.querySelectorAll('.modal-overlay').forEach(el => el.classList.add('hidden')); }
-    function toggleSidebar(show) {
-        if(show) { els.sidebar.classList.add('open'); els.overlay.style.display = 'block'; }
-        else { els.sidebar.classList.remove('open'); els.overlay.style.display = 'none'; }
-    }
-
-    // --- Listeners ---
+    
     function setupEventListeners() {
-        els.newChatBtn.onclick = () => createChat('ai');
-        els.newGroupBtn.onclick = () => els.groupModal.classList.remove('hidden');
-        els.newProjectBtn.onclick = () => els.projectModal.classList.remove('hidden');
-        
-        els.confirmProjectBtn.onclick = createProject;
-        els.confirmGroupBtn.onclick = createGroup;
-        els.moveChatBtn.onclick = openMoveModal;
-        
         els.sendBtn.onclick = sendMessage;
         els.input.onkeydown = (e) => { if(e.key === 'Enter') sendMessage(); };
-        els.input.oninput = (e) => els.sendBtn.disabled = e.target.value.trim() === '';
-        
-        els.chatSearch.oninput = renderChatList;
-        els.backToAllBtn.onclick = () => filterChats('all');
-
-        // Sidebar
-        els.mobileMenuBtn.onclick = () => toggleSidebar(true);
-        els.overlay.onclick = () => toggleSidebar(false);
-
-        // User Menu
-        els.userProfileBtn.onclick = (e) => { e.stopPropagation(); els.userMenu.classList.toggle('hidden'); };
-        document.onclick = () => els.userMenu.classList.add('hidden');
-        
+        els.newChatBtn.onclick = () => createChat('ai');
+        els.newProjectBtn.onclick = () => els.projectModal.classList.remove('hidden');
+        els.confirmProjectBtn.onclick = createProject;
         els.toggleThemeBtn.onclick = () => applyTheme(state.theme === 'light' ? 'dark' : 'light');
-        els.clearAllBtn.onclick = () => { if(confirm("Clear ALL?")) { state.chats=[]; state.projects=[]; saveData(); location.reload(); } };
-        els.settingsBtn.onclick = () => els.settingsModal.classList.remove('hidden');
+    }
 
-        document.querySelectorAll('.cancel-btn, .cancel-btn-icon').forEach(b => b.onclick = closeAllModals);
+    function setupVoiceRecognition() {
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (SpeechRecognition && els.voiceBtn) {
+            const recognition = new SpeechRecognition();
+            recognition.onresult = (e) => {
+                els.input.value = e.results[0][0].transcript;
+                sendMessage();
+            };
+            els.voiceBtn.onclick = () => recognition.start();
+        }
     }
 
     init();

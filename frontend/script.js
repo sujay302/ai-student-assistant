@@ -165,3 +165,26 @@ document.getElementById('signupForm').addEventListener('submit', (e) => {
         }, 1000);
     }, 1500);
 });
+
+
+
+/* for login area*/
+const authSection = document.getElementById('auth-section');
+
+// Logic to check if user is logged in (e.g., checking localStorage)
+if (userIsLoggedIn) {
+    authSection.innerHTML = `
+        <div class="profile-circle" onclick="togglePopup()">
+            <img src="user-icon.png" alt="Profile">
+        </div>
+    `;
+}
+function togglePopup() {
+    const popup = document.getElementById('profilePopup');
+    popup.classList.toggle('active');
+}
+
+
+
+
+

@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StudyPal | Your Premium AI Assistant</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div id="loader"><div class="spinner"></div></div>
+
+    <header id="navbar">
+        <nav class="container">
+            <div class="logo">
+                <div class="logo-icon"><i class="fa-solid fa-bolt-lightning"></i></div>
+                <span>StudyPal</span>
+            </div>
+            <ul class="nav-links" id="navLinks">
+                <li><a href="#home">Home</a></li>
+                <li><a href="#services">Services</a></li>
+                <li id="auth-ui-wrapper">
+                    <button class="btn-primary" onclick="openModal()">Login</button>
+                </li>
+            </ul>
+        </nav>
+    </header>
+
+    <main class="container">
+        <section class="hero" id="home">
+            <span class="badge">✨ v2.0 Live Now</span>
+            <h1>Optimize Your <span class="gradient-text">Learning Flow</span></h1>
+            <p>The all-in-one productivity suite for modern students. Solve, Focus, and Achieve.</p>
+            <div class="hero-btns">
+                <button class="btn-primary" onclick="activateFloatingTimer()">Get Started</button>
+                <button class="btn-outline"><i class="fa-solid fa-play"></i> Watch Demo</button>
+            </div>
+        </section>
+
+        <section id="services" class="services-grid">
+            <div class="glass-card">
+                <div class="card-icon blue"><i class="fa-solid fa-stopwatch"></i></div>
+                <h3>Deep Focus</h3>
+                <p>Advanced Pomodoro timer with distraction-free tracking.</p>
+                <button class="text-link" onclick="activateFloatingTimer()">Enable Timer →</button>
+            </div>
+            <div class="glass-card">
+                <div class="card-icon purple"><i class="fa-solid fa-wand-magic-sparkles"></i></div>
+                <h3>AI Tutor</h3>
+                <p>Instant answers and step-by-step explanations.</p>
+                <a href="chatting/chat.html" class="text-link">Ask StudyPal →</a>
+            </div>
+        </section>
+    </main>
+
+    <div id="floating-timer" class="timer-widget hidden">
+        <div class="timer-inner">
+            <div class="timer-top">
+                <span>Focus Session</span>
+                <button class="minimize-btn" onclick="toggleMinimize()"><i class="fa-solid fa-minus"></i></button>
+            </div>
+            <div id="timerBody">
+                <div id="timer-display">25:00</div>
+                <div class="timer-controls">
+                    <button id="startBtn" onclick="startTimer()"><i class="fa-solid fa-play"></i></button>
+                    <button id="pauseBtn" class="hidden" onclick="pauseTimer()"><i class="fa-solid fa-pause"></i></button>
+                    <button onclick="resetTimer()"><i class="fa-solid fa-rotate-left"></i></button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <audio id="alarmSound" src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg"></audio>
+    <script type="module" src="script.js"></script>
+</body>
+</html>
